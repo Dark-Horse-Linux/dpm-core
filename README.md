@@ -1,3 +1,9 @@
 # DPM-Core
 
-Dark Horse Linux Package Manager: Core Component
+The core component of the Dark Horse Linux Package Manager
+
+# What is DPM?
+
+https://dpm.darkhorselinux.org
+
+
