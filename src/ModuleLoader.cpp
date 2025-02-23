@@ -5,21 +5,21 @@ namespace fs = std::filesystem;
 ModuleLoader::ModuleLoader(std::string module_path)
 {
     try {
-        module_path_ = fs::absolute(module_path).string();
-        if (!module_path_.empty() && module_path_.back() != '/') {
-            module_path_ += '/';
+        _module_path = fs::absolute(module_path).string();
+        if (!_module_path.empty() && _module_path.back() != '/') {
+            _module_path += '/';
         }
     } catch (const fs::filesystem_error&) {
-        module_path_ = module_path;
-        if (!module_path_.empty() && module_path_.back() != '/') {
-            module_path_ += '/';
+        _module_path = module_path;
+        if (!_module_path.empty() && _module_path.back() != '/') {
+            _module_path += '/';
         }
     }
 }
 
 DPMError ModuleLoader::get_module_path(std::string& path) const
 {
-    path = module_path_;
+    path = _module_path;
     return DPMError::SUCCESS;
 }
 
@@ -28,7 +28,7 @@ DPMError ModuleLoader::list_available_modules(std::vector<std::string>& modules)
     modules.clear();
 
     try {
-        for (const auto& entry : fs::directory_iterator(module_path_)) {
+        for (const auto& entry : fs::directory_iterator(_module_path)) {
             if (entry.is_regular_file()) {
                 std::string filename = entry.path().filename().string();
                 if (filename.size() > 3 && filename.substr(filename.size() - 3) == ".so") {
@@ -45,7 +45,7 @@ DPMError ModuleLoader::list_available_modules(std::vector<std::string>& modules)
 
 DPMError ModuleLoader::load_module(const std::string& module_name, void*& module_handle) const
 {
-    std::string module_so_path = module_path_ + module_name + ".so";
+    std::string module_so_path = _module_path + module_name + ".so";
 
     module_handle = dlopen(module_so_path.c_str(), RTLD_LAZY);
     if (!module_handle) {
@@ -63,6 +63,13 @@ DPMError ModuleLoader::execute_module(const std::string& module_name, const std:
 
     if (load_error != DPMError::SUCCESS) {
         return load_error;
+    }
+
+    std::vector<std::string> missing_symbols;
+    DPMError validate_error = validate_module_interface(module_handle, missing_symbols);
+    if (validate_error != DPMError::SUCCESS) {
+        dlclose(module_handle);
+        return DPMError::INVALID_MODULE;
     }
 
     using ExecuteFn = int (*)(const char*, int, char**);

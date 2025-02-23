@@ -27,5 +27,5 @@ public:
     DPMError validate_module_interface(void* module_handle, std::vector<std::string>& missing_symbols) const;
 
 private:
-    std::string module_path_;
+    std::string _module_path;
 };
