@@ -3,6 +3,8 @@
 #include <getopt.h>
 #include <vector>
 #include "error.hpp"
+#include <dlfcn.h>
+#include <iomanip>
 #include "ModuleLoader.hpp"  // This should include ModuleLoader since it's used directly
 
 /*

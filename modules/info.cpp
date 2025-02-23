@@ -2,9 +2,21 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include "../include/module_interface.hpp"
+#include <gpgme.h>
 
 // Implementation of the info module
 // This module provides information about the DPM system
+
+// Version information
+extern "C" const char* dpm_module_get_version(void) {
+    return "0.1.0";
+}
+
+// Module description
+extern "C" const char* dpm_get_description(void) {
+    return "DPM Info Module - Provides information about the DPM system";
+}
 
 // Main entry point that will be called by DPM
 extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
@@ -30,7 +42,7 @@ extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
     }
     else if (cmd == "system") {
         std::cout << "System Information:\n";
-        std::cout << "  OS: " <<
+        std::cout << "  OS: "
 #ifdef _WIN32
             "Windows"
 #elif __APPLE__
@@ -41,7 +53,7 @@ extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
             "Unknown"
 #endif
             << "\n";
-        std::cout << "  Architecture: " <<
+        std::cout << "  Architecture: "
 #ifdef __x86_64__
             "x86_64"
 #elif __i386__
