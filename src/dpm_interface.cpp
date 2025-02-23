@@ -126,10 +126,10 @@ int main_list_modules(const ModuleLoader& loader)
     return 0;
 }
 
-// parser for populating data structure for supplied arguments
 CommandArgs parse_args(int argc, char* argv[])
 {
     CommandArgs args;
+    args.module_path = "/usr/lib/dpm/modules/";  // Set to same default as ModuleLoader
 
     static struct option long_options[] = {
         {"module-path", required_argument, 0, 'm'},
@@ -174,4 +174,32 @@ CommandArgs parse_args(int argc, char* argv[])
     }
 
     return args;
+}
+
+int print_error(DPMError error, const std::string& module_name, const std::string& module_path) {
+    switch (error) {
+        case DPMError::SUCCESS:
+            return 0;
+        case DPMError::PATH_NOT_FOUND:
+            std::cerr << "Module path not found: " << module_path << std::endl;
+        return 1;
+        case DPMError::PATH_NOT_DIRECTORY:
+            std::cerr << "Module path is not a directory: " << module_path << std::endl;
+        return 1;
+        case DPMError::PERMISSION_DENIED:
+            std::cerr << "Permission denied accessing module: " << module_name << std::endl;
+        return 1;
+        case DPMError::MODULE_NOT_FOUND:
+            std::cerr << "Module not found: " << module_name << std::endl;
+        return 1;
+        case DPMError::MODULE_LOAD_FAILED:
+            std::cerr << "Failed to load module: " << module_name << std::endl;
+        return 1;
+        case DPMError::INVALID_MODULE:
+            std::cerr << "Invalid module format: " << module_name << std::endl;
+        return 1;
+        default:
+            std::cerr << "Unknown error executing module: " << module_name << std::endl;
+        return 1;
+    }
 }

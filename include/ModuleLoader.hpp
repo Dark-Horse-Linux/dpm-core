@@ -9,6 +9,7 @@
 
 class ModuleLoader {
 public:
+    // initializer
     explicit ModuleLoader(std::string module_path = "/usr/lib/dpm/modules/");
     DPMError list_available_modules(std::vector<std::string>& modules) const;
     DPMError get_module_path(std::string& path) const;

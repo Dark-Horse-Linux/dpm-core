@@ -1,5 +1,6 @@
 #pragma once
 
+// global errors for the core DPM routing/execution component
 enum class DPMError {
     SUCCESS,
     PATH_NOT_FOUND,

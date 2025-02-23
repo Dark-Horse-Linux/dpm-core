@@ -24,10 +24,13 @@ int main_list_modules(const ModuleLoader& loader);
 
 // data structure for supplied arguments
 struct CommandArgs {
-    std::string module_path = "/usr/lib/dpm/modules/";
+    std::string module_path;
     std::string module_name;
     std::string command;  // All arguments combined into a single command string
 };
 
 // parser for populating data structure for supplied arguments
 CommandArgs parse_args(int argc, char* argv[]);
+
+// pairs DPMErrors to error messages, prints those error messages, and returns
+int print_error(DPMError error, const std::string& module_name, const std::string& module_path);
