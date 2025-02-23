@@ -2,10 +2,18 @@
 
 namespace fs = std::filesystem;
 
-ModuleLoader::ModuleLoader(std::string module_path) : module_path_(std::move(module_path))
+ModuleLoader::ModuleLoader(std::string module_path)
 {
-    if (!module_path_.empty() && module_path_.back() != '/') {
-        module_path_ += '/';
+    try {
+        module_path_ = fs::absolute(module_path).string();
+        if (!module_path_.empty() && module_path_.back() != '/') {
+            module_path_ += '/';
+        }
+    } catch (const fs::filesystem_error&) {
+        module_path_ = module_path;
+        if (!module_path_.empty() && module_path_.back() != '/') {
+            module_path_ += '/';
+        }
     }
 }
 
@@ -15,24 +23,12 @@ DPMError ModuleLoader::get_module_path(std::string& path) const
     return DPMError::SUCCESS;
 }
 
-DPMError ModuleLoader::get_absolute_module_path(std::string& abs_path) const
-{
-    try {
-        abs_path = fs::absolute(module_path_).string();
-        return DPMError::SUCCESS;
-    } catch (const fs::filesystem_error&) {
-        abs_path = module_path_;
-        return DPMError::PATH_NOT_FOUND;
-    }
-}
-
 DPMError ModuleLoader::list_available_modules(std::vector<std::string>& modules) const
 {
     modules.clear();
 
     try {
-        fs::path absolute_path = fs::absolute(module_path_);
-        for (const auto& entry : fs::directory_iterator(absolute_path)) {
+        for (const auto& entry : fs::directory_iterator(module_path_)) {
             if (entry.is_regular_file()) {
                 std::string filename = entry.path().filename().string();
                 if (filename.size() > 3 && filename.substr(filename.size() - 3) == ".so") {
@@ -60,22 +56,29 @@ DPMError ModuleLoader::load_module(const std::string& module_name, void*& module
     return DPMError::SUCCESS;
 }
 
-DPMError ModuleLoader::execute_module(void* module_handle, const std::string& command) const
+DPMError ModuleLoader::execute_module(const std::string& module_name, const std::string& command) const
 {
-    if (!module_handle) {
-        return DPMError::INVALID_MODULE;
+    void* module_handle;
+    DPMError load_error = load_module(module_name, module_handle);
+
+    if (load_error != DPMError::SUCCESS) {
+        return load_error;
     }
 
     using ExecuteFn = int (*)(const char*, int, char**);
     ExecuteFn execute_fn = (ExecuteFn)dlsym(module_handle, "dpm_module_execute");
 
     const char* error = dlerror();
+    DPMError result = DPMError::SUCCESS;
+
     if (error != nullptr) {
-        return DPMError::MODULE_LOAD_FAILED;
+        result = DPMError::MODULE_LOAD_FAILED;
+    } else {
+        execute_fn(command.c_str(), 0, nullptr);
     }
 
-    execute_fn(command.c_str(), 0, nullptr);
-    return DPMError::SUCCESS;
+    dlclose(module_handle);
+    return result;
 }
 
 DPMError ModuleLoader::get_module_version(void* module_handle, std::string& version) const

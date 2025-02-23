@@ -12,31 +12,37 @@
 int main_check_module_path(const ModuleLoader& loader)
 {
     std::string path;
-    DPMError path_error = loader.get_absolute_module_path(path);
-    if (path_error != DPMError::SUCCESS) {
-        switch (path_error) {
-            case DPMError::PATH_NOT_FOUND:
-                std::cerr << "Module path not found: " << path << std::endl;
-            break;
-            case DPMError::PATH_NOT_DIRECTORY:
-                std::cerr << "Not a directory: " << path << std::endl;
-            break;
-            case DPMError::PERMISSION_DENIED:
-                std::cerr << "Permission denied: " << path << std::endl;
-            break;
-            default:
-                std::cerr << "Failed checking module path: " << path << std::endl;
-        }
+    loader.get_module_path(path);
+
+    if (!std::filesystem::exists(path)) {
+        std::cerr << "Module path does not exist: " << path << std::endl;
         return 1;
     }
+
+    if (!std::filesystem::is_directory(path)) {
+        std::cerr << "Module path is not a directory: " << path << std::endl;
+        return 1;
+    }
+
+    try {
+        auto perms = std::filesystem::status(path).permissions();
+        if ((perms & std::filesystem::perms::owner_read) == std::filesystem::perms::none) {
+            std::cerr << "Permission denied: " << path << std::endl;
+            return 1;
+        }
+    } catch (const std::filesystem::filesystem_error&) {
+        std::cerr << "Permission denied: " << path << std::endl;
+        return 1;
+    }
+
     return 0;
 }
 
-// list the modules with version information in table format
+// list the modules
 int main_list_modules(const ModuleLoader& loader)
 {
     std::vector<std::string> modules;
-    std::string path, abs_path;
+    std::string path;
 
     DPMError get_path_error = loader.get_module_path(path);
     if (get_path_error != DPMError::SUCCESS) {
@@ -46,14 +52,7 @@ int main_list_modules(const ModuleLoader& loader)
 
     DPMError list_error = loader.list_available_modules(modules);
     if (list_error != DPMError::SUCCESS) {
-        loader.get_absolute_module_path(abs_path);
-        switch (list_error) {
-            case DPMError::PERMISSION_DENIED:
-                std::cerr << "Permission denied reading modules from: " << path << std::endl;
-            break;
-            default:
-                std::cerr << "Failed listing modules from: " << path << std::endl;
-        }
+        std::cerr << "No modules found in: " << path << std::endl;
         return 1;
     }
 
@@ -126,7 +125,6 @@ int main_list_modules(const ModuleLoader& loader)
 
     return 0;
 }
-
 
 // parser for populating data structure for supplied arguments
 CommandArgs parse_args(int argc, char* argv[])

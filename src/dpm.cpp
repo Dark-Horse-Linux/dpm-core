@@ -11,6 +11,35 @@
  *       3. Provide a module-agnostic unified interface for modules.
  */
 
+// prints error message and returns error code
+int print_error(DPMError error, const std::string& module_name, const std::string& module_path) {
+    switch (error) {
+        case DPMError::SUCCESS:
+            return 0;
+        case DPMError::PATH_NOT_FOUND:
+            std::cerr << "Module path not found: " << module_path << std::endl;
+            return 1;
+        case DPMError::PATH_NOT_DIRECTORY:
+            std::cerr << "Module path is not a directory: " << module_path << std::endl;
+            return 1;
+        case DPMError::PERMISSION_DENIED:
+            std::cerr << "Permission denied accessing module: " << module_name << std::endl;
+            return 1;
+        case DPMError::MODULE_NOT_FOUND:
+            std::cerr << "Module not found: " << module_name << std::endl;
+            return 1;
+        case DPMError::MODULE_LOAD_FAILED:
+            std::cerr << "Failed to load module: " << module_name << std::endl;
+            return 1;
+        case DPMError::INVALID_MODULE:
+            std::cerr << "Invalid module format: " << module_name << std::endl;
+            return 1;
+        default:
+            std::cerr << "Unknown error executing module: " << module_name << std::endl;
+            return 1;
+    }
+}
+
 // the default behaviour if dpm is executed without being told to do anything
 int default_behavior(const ModuleLoader& loader)
 {
@@ -44,32 +73,6 @@ int main( int argc, char* argv[] )
         return default_behavior( loader );
     }
 
-    // create a module handle
-    void * module_handle;
-
-    // load the user-supplied module to execute
-    DPMError load_error = loader.load_module( args.module_name, module_handle );
-
-    // if that failed, additionally print an error and return a non-zero exit code
-    // TODO: verify that loader.load_module is actually doing error handling
-    if ( load_error != DPMError::SUCCESS ) {
-        std::cerr << "Failed to load module: " << args.module_name << std::endl;
-        return 1;
-    }
-
-    // execute the module and provide the user-supplied command to execute
-    DPMError execute_error = loader.execute_module( module_handle, args.command );
-
-    // there is no retry logic, so, whether execute succeeded
-    // or failed, clean up the module handle
-    dlclose(module_handle);
-
-    // check the execution result and if it failed, report an additional error
-    // TODO: verify that loader.execute_module is actually doing error handling
-    if (execute_error != DPMError::SUCCESS) {
-        std::cerr << "Failed to execute module: " << args.module_name << std::endl;
-        return 1;
-    }
-
-    return 0;
+    DPMError execute_error = loader.execute_module(args.module_name, args.command);
+    return print_error(execute_error, args.module_name, args.module_path);
 }

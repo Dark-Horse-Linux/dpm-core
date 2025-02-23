@@ -5,7 +5,8 @@
 #include "error.hpp"
 #include <dlfcn.h>
 #include <iomanip>
-#include "ModuleLoader.hpp"  // This should include ModuleLoader since it's used directly
+#include <filesystem>
+#include "ModuleLoader.hpp"
 
 /*
  *
