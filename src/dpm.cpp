@@ -42,6 +42,9 @@ int main( int argc, char* argv[] )
         return default_behavior( loader );
     }
 
+    // execute the module
     DPMError execute_error = loader.execute_module(args.module_name, args.command);
+
+    // pair result with a message and exit with the appropriate error code
     return print_error(execute_error, args.module_name, args.module_path);
 }
