@@ -52,96 +52,174 @@ DPMError ModuleLoader::load_module(const std::string& module_name, void*& module
         return DPMError::MODULE_LOAD_FAILED;
     }
 
-    dlerror();
-    return DPMError::SUCCESS;
+    std::vector<std::string> missing_symbols;
+    DPMError validate_error = validate_module_interface(module_handle, missing_symbols);
+    if ( validate_error != DPMError::SUCCESS ) {
+        dlclose(module_handle);
+        return validate_error;
+    }
+
+    return validate_error;
 }
 
 DPMError ModuleLoader::execute_module(const std::string& module_name, const std::string& command) const
 {
-    void* module_handle;
-    DPMError load_error = load_module(module_name, module_handle);
+    // declare a module_handle
+    void * module_handle;
 
-    if (load_error != DPMError::SUCCESS) {
+    // attempt to load the module
+    DPMError load_error = load_module( module_name, module_handle );
+    if ( load_error != DPMError::SUCCESS ) {
         return load_error;
     }
 
-    std::vector<std::string> missing_symbols;
-    DPMError validate_error = validate_module_interface(module_handle, missing_symbols);
-    if (validate_error != DPMError::SUCCESS) {
-        dlclose(module_handle);
-        return DPMError::INVALID_MODULE;
+    // Clear any previous error state and handle any residual failure
+    const char* pre_error = dlerror();
+    if ( pre_error != nullptr ) {
+        dlclose( module_handle );
+        return DPMError::UNDEFINED_ERROR;
     }
 
-    using ExecuteFn = int (*)(const char*, int, char**);
-    ExecuteFn execute_fn = (ExecuteFn)dlsym(module_handle, "dpm_module_execute");
+    // declare a function pointer type to hold the module symbol to execute
+    typedef int (*ExecuteFn) ( const char*, int, char** );
 
-    const char* error = dlerror();
-    DPMError result = DPMError::SUCCESS;
+    // populate that void pointer to the execute symbol in the module with
+    ExecuteFn execute_fn = (ExecuteFn) dlsym( module_handle, "dpm_module_execute" );
 
-    if (error != nullptr) {
-        result = DPMError::MODULE_LOAD_FAILED;
-    } else {
-        execute_fn(command.c_str(), 0, nullptr);
+    // do basic error handling to detect if the symbol look up was successful
+    const char * dlsym_error = dlerror();
+    if ( dlsym_error != nullptr ) {
+        dlclose( module_handle );
+        return DPMError::SYMBOL_NOT_FOUND;
     }
 
-    dlclose(module_handle);
-    return result;
+    // check if the void pointer was populated
+    if ( execute_fn == nullptr ) {
+        dlclose( module_handle );
+        return DPMError::SYMBOL_NOT_FOUND;
+    }
+
+    // execute the symbol that was loaded and supply the command string being routed from DPM
+    int exec_error = execute_fn( command.c_str(), 0, nullptr );
+
+    // irregardless of result, this is the time to close the module handle
+    dlclose( module_handle );
+
+    // if the result of execution was not 0, return an error
+    if ( exec_error != 0 ) {
+        return DPMError::SYMBOL_EXECUTION_FAILED;
+    }
+
+    // if we made it here, assume it was successful
+    return DPMError::SUCCESS;
 }
 
-DPMError ModuleLoader::get_module_version(void* module_handle, std::string& version) const
+
+DPMError ModuleLoader::get_module_version( void * module_handle, std::string& version ) const
 {
-    if (!module_handle) {
+    // validate that the module is even loaded
+    if ( !module_handle ) {
+        version = "DPM ERROR";
+        return DPMError::MODULE_NOT_LOADED;
+    }
+
+    // Clear any previous error state and handle any residual failure
+    const char* pre_error = dlerror();
+    if ( pre_error != nullptr ) {
+        version = pre_error;
+        return DPMError::UNDEFINED_ERROR;
+    }
+
+    // declare a function pointer type to hold the module symbol to execute
+    typedef const char * (* VersionFn)();
+
+    // populate that void pointer to execute the symbol in the module with
+    VersionFn version_fn = (VersionFn) dlsym( module_handle, "dpm_module_get_version" );
+
+    // Check for errors from dlsym
+    const char* error = dlerror();
+    if (error != nullptr) {
+        version = error;
+        return DPMError::SYMBOL_NOT_FOUND;
+    }
+
+    // check if the void pointer was populated
+    if ( version_fn == nullptr ) {
         version = "ERROR";
+        return DPMError::SYMBOL_NOT_FOUND;
+    }
+
+    // execute the loaded symbol
+    const char * ver = version_fn();
+
+    // check the return, and throw an error if it's a null value
+    if ( ver == nullptr ) {
+        version = "MODULE ERROR";
         return DPMError::INVALID_MODULE;
     }
 
-    dlerror();
-
-    using GetVersionFn = const char* (*)();
-    GetVersionFn get_version = (GetVersionFn)dlsym(module_handle, "dpm_module_get_version");
-
-    const char* error = dlerror();
-    if (error != nullptr) {
-        version = "unknown";
-        return DPMError::MODULE_LOAD_FAILED;
-    }
-
-    const char* ver = get_version();
-    version = ver ? ver : "unknown";
+    // if you made it here, assume success
     return DPMError::SUCCESS;
 }
 
 DPMError ModuleLoader::get_module_description(void* module_handle, std::string& description) const
 {
+    // validate that the module is even loaded
     if (!module_handle) {
+        description = "DPM ERROR";
+        return DPMError::MODULE_NOT_LOADED;
+    }
+
+    // Clear any previous error state and handle any residual failure
+    const char* pre_error = dlerror();
+    if ( pre_error != nullptr ) {
+        version = pre_error;
+        return DPMError::UNDEFINED_ERROR;
+    }
+
+    // declare a function pointer type to hold the module symbol to execute
+    typedef const char * (* DescriptionFn)();
+
+    // populate that void pointer to execute the symbol in the module with
+    DescriptionFn description_fn = (DescriptionFn) dlsym( module_handle, "dpm_get_description" );
+
+    // check for errors from dlsym
+    const char* error = dlerror();
+    if ( error != nullptr ) {
+        description = "ERROR";
+        return DPMError::SYMBOL_NOT_FOUND;
+    }
+
+    // check if the void pointer was populated
+    if ( description_fn == nullptr ) {
         description = "ERROR";
         return DPMError::INVALID_MODULE;
     }
 
-    dlerror();
+    // execute the loaded symbol
+    const char* desc = description_fn();
 
-    using GetDescriptionFn = const char* (*)();
-    GetDescriptionFn get_description = (GetDescriptionFn)dlsym(module_handle, "dpm_get_description");
-
-    const char* error = dlerror();
-    if (error != nullptr) {
-        description = "unknown";
-        return DPMError::MODULE_LOAD_FAILED;
+    // check the return, and throw an error if it's a null value
+    if ( desc == nullptr ) {
+        description = "MODULE ERROR";
+        return DPMError::INVALID_MODULE;
     }
 
-    const char* desc = get_description();
-    description = desc ? desc : "unknown";
+    // if you made it here, assume success
     return DPMError::SUCCESS;
 }
 
 DPMError ModuleLoader::validate_module_interface(void* module_handle, std::vector<std::string>& missing_symbols) const
 {
-    if (!module_handle) {
-        return DPMError::INVALID_MODULE;
+    // validate that the module is even loaded
+    if ( !module_handle ) {
+        return DPMError::MODULE_NOT_LOADED;
     }
 
+    // ensure our starting point of missing symbols is empty
     missing_symbols.clear();
 
+    // get the size of the loop (should be equal to the number of required symbols)
     size_t num_symbols = module_interface::required_symbols.size();
     for (size_t i = 0; i < num_symbols; i++) {
         dlerror();

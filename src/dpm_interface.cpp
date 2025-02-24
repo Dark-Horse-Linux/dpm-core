@@ -62,9 +62,9 @@ int main_list_modules(const ModuleLoader& loader)
     }
 
     std::vector<std::string> valid_modules;
-    for (const auto& module : modules) {
+    for (int i = 0; i < modules.size(); i++) {
         void* handle;
-        DPMError load_error = loader.load_module(module, handle);
+        DPMError load_error = loader.load_module(modules[i], handle);
         if (load_error != DPMError::SUCCESS) {
             continue;
         }
@@ -72,7 +72,7 @@ int main_list_modules(const ModuleLoader& loader)
         std::vector<std::string> missing_symbols;
         DPMError validate_error = loader.validate_module_interface(handle, missing_symbols);
         if (validate_error == DPMError::SUCCESS) {
-            valid_modules.push_back(module);
+            valid_modules.push_back(modules[i]);
         }
         dlclose(handle);
     }
@@ -84,12 +84,12 @@ int main_list_modules(const ModuleLoader& loader)
 
     size_t max_name_length = 0;
     size_t max_version_length = 0;
-    for (const auto& module : valid_modules) {
+    for (int i = 0; i < valid_modules.size(); i++) {
         void* module_handle;
         std::string version;
-        max_name_length = std::max(max_name_length, module.length());
+        max_name_length = std::max(max_name_length, valid_modules[i].length());
 
-        DPMError load_error = loader.load_module(module, module_handle);
+        DPMError load_error = loader.load_module(valid_modules[i], module_handle);
         if (load_error == DPMError::SUCCESS) {
             DPMError version_error = loader.get_module_version(module_handle, version);
             if (version_error == DPMError::SUCCESS) {
@@ -101,24 +101,24 @@ int main_list_modules(const ModuleLoader& loader)
 
     const int column_spacing = 4;
 
-    std::cout << "Available modules in '" << path << "':" << std::endl << std::endl;
+    std::cout << "\nAvailable modules in '" << path << "':" << std::endl << std::endl;
     std::cout << std::left << std::setw(max_name_length + column_spacing) << "MODULE"
               << std::setw(max_version_length + column_spacing) << "VERSION"
               << "DESCRIPTION" << std::endl;
 
-    for (const auto& module_name : valid_modules) {
+    for (int i = 0; i < valid_modules.size(); i++) {
         void* module_handle;
         std::string version = "unknown";
         std::string description = "unknown";
 
-        DPMError load_error = loader.load_module(module_name, module_handle);
+        DPMError load_error = loader.load_module(valid_modules[i], module_handle);
         if (load_error == DPMError::SUCCESS) {
             DPMError version_error = loader.get_module_version(module_handle, version);
             DPMError desc_error = loader.get_module_description(module_handle, description);
             dlclose(module_handle);
         }
 
-        std::cout << std::left << std::setw(max_name_length + column_spacing) << module_name
+        std::cout << std::left << std::setw(max_name_length + column_spacing) << valid_modules[i]
                   << std::setw(max_version_length + column_spacing) << version
                   << description << std::endl;
     }
@@ -143,14 +143,14 @@ CommandArgs parse_args(int argc, char* argv[])
         switch (opt) {
             case 'm':
                 args.module_path = optarg;
-            break;
+                break;
             case 'h':
                 std::cout << "Usage: dpm [options] [module-name] [module args...]\n\n"
-                         << "Options:\n\n"
-                         << "  -m, --module-path PATH   Path to DPM modules\n"
-                         << "  -h, --help              Show this help message\n"
-                         << "\nIf no module is specified, available modules will be listed.\n\n";
-            exit(0);
+                          << "Options:\n\n"
+                          << "  -m, --module-path PATH   Path to DPM modules\n"
+                          << "  -h, --help              Show this help message\n\n"
+                          << "If no module is specified, available modules will be listed.\n\n";
+                exit(0);
             case '?':
                 exit(1);
         }
@@ -192,11 +192,17 @@ int print_error(DPMError error, const std::string& module_name, const std::strin
         case DPMError::MODULE_NOT_FOUND:
             std::cerr << "Module not found: " << module_name << std::endl;
         return 1;
+        case DPMError::MODULE_NOT_LOADED:
+            std::cerr << "Attempted to execute module before loading it: " << module_name << std::endl;
+        return 1;
         case DPMError::MODULE_LOAD_FAILED:
             std::cerr << "Failed to load module: " << module_name << std::endl;
         return 1;
         case DPMError::INVALID_MODULE:
             std::cerr << "Invalid module format: " << module_name << std::endl;
+        return 1;
+        case DPMError::UNDEFINED_ERROR:
+            std::cerr << "Undefined error occurred with module: " << module_name << std::endl;
         return 1;
         default:
             std::cerr << "Unknown error executing module: " << module_name << std::endl;
