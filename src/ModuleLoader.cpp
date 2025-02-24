@@ -45,10 +45,18 @@ DPMError ModuleLoader::list_available_modules(std::vector<std::string>& modules)
 
 DPMError ModuleLoader::load_module(const std::string& module_name, void*& module_handle) const
 {
+    // construct the path to load the module from based on supplied identifier
+    // DPM uses whatever the file name is
     std::string module_so_path = _module_path + module_name + ".so";
 
+
     module_handle = dlopen(module_so_path.c_str(), RTLD_LAZY);
-    if (!module_handle) {
+    if ( !module_handle ) {
+        return DPMError::MODULE_LOAD_FAILED;
+    }
+
+    const char * load_error = dlerror();
+    if ( load_error != nullptr ) {
         return DPMError::MODULE_LOAD_FAILED;
     }
 
@@ -62,7 +70,7 @@ DPMError ModuleLoader::load_module(const std::string& module_name, void*& module
     return validate_error;
 }
 
-DPMError ModuleLoader::execute_module(const std::string& module_name, const std::string& command) const
+DPMError ModuleLoader::execute_module( const std::string& module_name, const std::string& command ) const
 {
     // declare a module_handle
     void * module_handle;
@@ -114,7 +122,6 @@ DPMError ModuleLoader::execute_module(const std::string& module_name, const std:
     return DPMError::SUCCESS;
 }
 
-
 DPMError ModuleLoader::get_module_version( void * module_handle, std::string& version ) const
 {
     // validate that the module is even loaded
@@ -162,7 +169,7 @@ DPMError ModuleLoader::get_module_version( void * module_handle, std::string& ve
     return DPMError::SUCCESS;
 }
 
-DPMError ModuleLoader::get_module_description(void* module_handle, std::string& description) const
+DPMError ModuleLoader::get_module_description( void * module_handle, std::string& description ) const
 {
     // validate that the module is even loaded
     if (!module_handle) {
@@ -209,7 +216,7 @@ DPMError ModuleLoader::get_module_description(void* module_handle, std::string& 
     return DPMError::SUCCESS;
 }
 
-DPMError ModuleLoader::validate_module_interface(void* module_handle, std::vector<std::string>& missing_symbols) const
+DPMError ModuleLoader::validate_module_interface( void* module_handle, std::vector<std::string>& missing_symbols ) const
 {
     // validate that the module is even loaded
     if ( !module_handle ) {
@@ -221,19 +228,36 @@ DPMError ModuleLoader::validate_module_interface(void* module_handle, std::vecto
 
     // get the size of the loop (should be equal to the number of required symbols)
     size_t num_symbols = module_interface::required_symbols.size();
-    for (size_t i = 0; i < num_symbols; i++) {
-        dlerror();
-        void* sym = dlsym(module_handle, module_interface::required_symbols[i].c_str());
-        const char* error = dlerror();
 
-        if (error != nullptr) {
-            missing_symbols.push_back(module_interface::required_symbols[i]);
-        }
+    // check for any residual lingering errors
+    const char * pre_error = dlerror();
+    if ( pre_error != nullptr ) {
+        return DPMError::UNDEFINED_ERROR;
     }
 
-    if (missing_symbols.empty()) {
+    // declare a function pointer type to hold the module symbol to execute
+    typedef const char * (* ModuleInterfaceFn)();
+
+    // iterate through self.required_symbols
+    for ( size_t i = 0; i < num_symbols; i++ ) {
+
+        // attempt to load each required symbol
+        ModuleInterfaceFn loaded_required_symbol = (ModuleInterfaceFn) dlsym( module_handle, module_interface::required_symbols[i].c_str() );
+
+        // check for an error from dlsym
+        const char * dlsym_error = dlerror();
+        if (dlsym_error != nullptr) {
+            // if nullptr, it didn't load, so assume it's missing
+            missing_symbols.push_back(module_interface::required_symbols[i]);
+        }
+
+    }
+
+    // if there are no missing symbols, return successfully -- the module has a valid API
+    if ( missing_symbols.empty() ) {
         return DPMError::SUCCESS;
     }
 
+    // if not successful, the module's API is invalid and return the appropriate error code
     return DPMError::INVALID_MODULE;
 }
