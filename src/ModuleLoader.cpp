@@ -173,7 +173,7 @@ DPMError ModuleLoader::get_module_description(void* module_handle, std::string& 
     // Clear any previous error state and handle any residual failure
     const char* pre_error = dlerror();
     if ( pre_error != nullptr ) {
-        version = pre_error;
+        description = pre_error;
         return DPMError::UNDEFINED_ERROR;
     }
 
