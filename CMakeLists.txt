@@ -11,6 +11,10 @@ add_executable(
         src/dpm.cpp
         src/ModuleLoader.cpp
         src/dpm_interface.cpp
+        src/error.cpp
+        include/dpm_interface_helpers.hpp
+        src/dpm_interface_helpers.cpp
+        src/handlers.cpp
 )
 
 target_include_directories(dpm PRIVATE include)
@@ -19,7 +23,7 @@ target_link_libraries(dpm dl)
 # Add the info module
 add_library(info MODULE modules/info.cpp)
 set_target_properties(info PROPERTIES
-        PREFIX ""  # Remove lib prefix
+        PREFIX ""
         SUFFIX ".so"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"
 )

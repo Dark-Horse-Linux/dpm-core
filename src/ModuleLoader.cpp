@@ -2,6 +2,7 @@
 
 namespace fs = std::filesystem;
 
+// ModuleLoader constructor
 ModuleLoader::ModuleLoader(std::string module_path)
 {
     try {
@@ -17,67 +18,200 @@ ModuleLoader::ModuleLoader(std::string module_path)
     }
 }
 
-DPMError ModuleLoader::get_module_path(std::string& path) const
+// getter for module path
+DPMErrorCategory ModuleLoader::get_module_path(std::string& path) const
 {
     path = _module_path;
-    return DPMError::SUCCESS;
+    return DPMErrorCategory::SUCCESS;
 }
 
-DPMError ModuleLoader::list_available_modules(std::vector<std::string>& modules) const
+// Helper method to check module path validity
+DPMErrorCategory ModuleLoader::check_module_path() const
 {
-    modules.clear();
-
-    try {
-        for (const auto& entry : fs::directory_iterator(_module_path)) {
-            if (entry.is_regular_file()) {
-                std::string filename = entry.path().filename().string();
-                if (filename.size() > 3 && filename.substr(filename.size() - 3) == ".so") {
-                    modules.push_back(filename.substr(0, filename.size() - 3));
-                }
-            }
+    // Verify the path exists and get its properties
+    struct stat path_stat;
+    if (stat(_module_path.c_str(), &path_stat) != 0) {
+        // Check errno to determine the specific error
+        switch (errno) {
+            case ENOENT:
+                return DPMErrorCategory::PATH_NOT_FOUND;
+            case EACCES:
+                return DPMErrorCategory::PERMISSION_DENIED;
+            case ENAMETOOLONG:
+                return DPMErrorCategory::PATH_TOO_LONG;
+            case ENOTDIR:
+                // This happens when a component of the path prefix isn't a directory
+                    return DPMErrorCategory::PATH_NOT_DIRECTORY;
+            default:
+                return DPMErrorCategory::UNDEFINED_ERROR;
         }
-    } catch (const fs::filesystem_error&) {
-        return DPMError::PERMISSION_DENIED;
     }
 
-    return DPMError::SUCCESS;
+    // At this point stat() succeeded, now check if the final path component is a directory
+    if (!S_ISDIR(path_stat.st_mode)) {
+        return DPMErrorCategory::PATH_NOT_DIRECTORY;
+    }
+
+    // Check read permissions using the stat results
+    if ((path_stat.st_mode & S_IRUSR) == 0) {
+        return DPMErrorCategory::PERMISSION_DENIED;
+    }
+
+    return DPMErrorCategory::SUCCESS;
 }
 
-DPMError ModuleLoader::load_module(const std::string& module_name, void*& module_handle) const
+DPMErrorCategory ModuleLoader::list_available_modules(std::vector<std::string>& modules) const
 {
+    // ensure we start with an empty vector
+    modules.clear();
+
+    // Check module path using the helper method
+    DPMErrorCategory path_check = check_module_path();
+    if (path_check != DPMErrorCategory::SUCCESS) {
+        return path_check;
+    }
+
+    // prepare to iterate the directory
+    DIR* dir = opendir(_module_path.c_str());
+    if (!dir) {
+        // Check errno to determine the cause of the failure
+        switch (errno) {
+            case EACCES:
+                return DPMErrorCategory::PERMISSION_DENIED;
+            case ENOENT:
+                return DPMErrorCategory::PATH_NOT_FOUND;
+            case ENOTDIR:
+                return DPMErrorCategory::PATH_NOT_DIRECTORY;
+            default:
+                return DPMErrorCategory::UNDEFINED_ERROR;
+        }
+    }
+
+    // read each entry
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // skip . and ..
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        // build the full path
+        std::string full_path = _module_path + entry->d_name;
+
+        // verify it's a file or a symlink
+        struct stat st;
+        if (stat(full_path.c_str(), &st) == -1) {
+            continue;
+        }
+
+        // Skip if not a regular file or a symlink
+        if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode)) {
+            continue;
+        }
+
+        // get length of filename for boundary checking
+        size_t name_len = strlen(entry->d_name);
+
+        // skip if filename too short to be .so
+        if (name_len <= 3) {
+            continue;
+        }
+
+        // verify file ends in .so
+        if (strcmp(entry->d_name + name_len - 3, ".so") != 0) {
+            continue;
+        }
+
+        // calculate the module name length
+        size_t module_name_len = name_len - 3;
+
+        // create space for the module name
+        char * module_name = (char*) malloc(module_name_len + 1);
+        if (!module_name) {
+            closedir(dir);
+            return DPMErrorCategory::UNDEFINED_ERROR;
+        }
+
+        // copy the name without .so
+        strncpy(module_name, entry->d_name, module_name_len);
+        module_name[module_name_len] = '\0';
+
+        // add to our list
+        modules.push_back(std::string(module_name));
+
+        // clean up
+        free(module_name);
+    }
+
+    // clean up
+    closedir(dir);
+
+    return DPMErrorCategory::SUCCESS;
+}
+
+DPMErrorCategory ModuleLoader::load_module(const std::string& module_name, void*& module_handle) const
+{
+    // First check if the module exists in the list of available modules
+    std::vector<std::string> available_modules;
+    DPMErrorCategory list_error = list_available_modules( available_modules );
+
+    // if there was a listing error, return that
+    if ( list_error != DPMErrorCategory::SUCCESS ) {
+        return list_error;
+    }
+
+    // Check if the requested module is in the list of available modules
+    bool module_found = false;
+    for ( size_t i = 0; i < available_modules.size(); i++ ) {
+        if ( available_modules[i] == module_name ) {
+            module_found = true;
+            break;
+        }
+    }
+
+    // if the supplied module isn't in the list of available modules, return the error
+    if ( !module_found ) {
+        return DPMErrorCategory::MODULE_NOT_FOUND;
+    }
+
     // construct the path to load the module from based on supplied identifier
     // DPM uses whatever the file name is
     std::string module_so_path = _module_path + module_name + ".so";
 
-
+    // go ahead and open the module
     module_handle = dlopen(module_so_path.c_str(), RTLD_LAZY);
-    if ( !module_handle ) {
-        return DPMError::MODULE_LOAD_FAILED;
+    if (!module_handle) {
+        return DPMErrorCategory::MODULE_LOAD_FAILED;
     }
 
+    // if there was a loading error, return that
     const char * load_error = dlerror();
     if ( load_error != nullptr ) {
-        return DPMError::MODULE_LOAD_FAILED;
+        return DPMErrorCategory::MODULE_LOAD_FAILED;
     }
 
+    // validate the module's exposed API
+    // return an error if it's not up to spec
     std::vector<std::string> missing_symbols;
-    DPMError validate_error = validate_module_interface(module_handle, missing_symbols);
-    if ( validate_error != DPMError::SUCCESS ) {
-        dlclose(module_handle);
+    DPMErrorCategory validate_error = validate_module_interface( module_handle, missing_symbols );
+    if ( validate_error != DPMErrorCategory::SUCCESS ) {
+        // we failed to validate the interface, so close the module handle since we won't use it
+        dlclose( module_handle );
         return validate_error;
     }
 
+    // return what's going to be a success
     return validate_error;
 }
 
-DPMError ModuleLoader::execute_module( const std::string& module_name, const std::string& command ) const
+DPMErrorCategory ModuleLoader::execute_module( const std::string& module_name, const std::string& command ) const
 {
     // declare a module_handle
     void * module_handle;
 
     // attempt to load the module
-    DPMError load_error = load_module( module_name, module_handle );
-    if ( load_error != DPMError::SUCCESS ) {
+    DPMErrorCategory load_error = load_module( module_name, module_handle );
+    if ( load_error != DPMErrorCategory::SUCCESS ) {
         return load_error;
     }
 
@@ -85,7 +219,7 @@ DPMError ModuleLoader::execute_module( const std::string& module_name, const std
     const char* pre_error = dlerror();
     if ( pre_error != nullptr ) {
         dlclose( module_handle );
-        return DPMError::UNDEFINED_ERROR;
+        return DPMErrorCategory::UNDEFINED_ERROR;
     }
 
     // declare a function pointer type to hold the module symbol to execute
@@ -98,13 +232,13 @@ DPMError ModuleLoader::execute_module( const std::string& module_name, const std
     const char * dlsym_error = dlerror();
     if ( dlsym_error != nullptr ) {
         dlclose( module_handle );
-        return DPMError::SYMBOL_NOT_FOUND;
+        return DPMErrorCategory::SYMBOL_NOT_FOUND;
     }
 
     // check if the void pointer was populated
     if ( execute_fn == nullptr ) {
         dlclose( module_handle );
-        return DPMError::SYMBOL_NOT_FOUND;
+        return DPMErrorCategory::SYMBOL_NOT_FOUND;
     }
 
     // execute the symbol that was loaded and supply the command string being routed from DPM
@@ -115,26 +249,26 @@ DPMError ModuleLoader::execute_module( const std::string& module_name, const std
 
     // if the result of execution was not 0, return an error
     if ( exec_error != 0 ) {
-        return DPMError::SYMBOL_EXECUTION_FAILED;
+        return DPMErrorCategory::SYMBOL_EXECUTION_FAILED;
     }
 
     // if we made it here, assume it was successful
-    return DPMError::SUCCESS;
+    return DPMErrorCategory::SUCCESS;
 }
 
-DPMError ModuleLoader::get_module_version( void * module_handle, std::string& version ) const
+DPMErrorCategory ModuleLoader::get_module_version( void * module_handle, std::string& version ) const
 {
     // validate that the module is even loaded
     if ( !module_handle ) {
         version = "DPM ERROR";
-        return DPMError::MODULE_NOT_LOADED;
+        return DPMErrorCategory::MODULE_NOT_LOADED;
     }
 
     // Clear any previous error state and handle any residual failure
     const char* pre_error = dlerror();
     if ( pre_error != nullptr ) {
         version = pre_error;
-        return DPMError::UNDEFINED_ERROR;
+        return DPMErrorCategory::UNDEFINED_ERROR;
     }
 
     // declare a function pointer type to hold the module symbol to execute
@@ -147,13 +281,13 @@ DPMError ModuleLoader::get_module_version( void * module_handle, std::string& ve
     const char* error = dlerror();
     if (error != nullptr) {
         version = error;
-        return DPMError::SYMBOL_NOT_FOUND;
+        return DPMErrorCategory::SYMBOL_NOT_FOUND;
     }
 
     // check if the void pointer was populated
     if ( version_fn == nullptr ) {
         version = "ERROR";
-        return DPMError::SYMBOL_NOT_FOUND;
+        return DPMErrorCategory::SYMBOL_NOT_FOUND;
     }
 
     // execute the loaded symbol
@@ -162,26 +296,29 @@ DPMError ModuleLoader::get_module_version( void * module_handle, std::string& ve
     // check the return, and throw an error if it's a null value
     if ( ver == nullptr ) {
         version = "MODULE ERROR";
-        return DPMError::INVALID_MODULE;
+        return DPMErrorCategory::INVALID_MODULE;
     }
 
+    // Set the version string with the result
+    version = ver;
+
     // if you made it here, assume success
-    return DPMError::SUCCESS;
+    return DPMErrorCategory::SUCCESS;
 }
 
-DPMError ModuleLoader::get_module_description( void * module_handle, std::string& description ) const
+DPMErrorCategory ModuleLoader::get_module_description( void * module_handle, std::string& description ) const
 {
     // validate that the module is even loaded
     if (!module_handle) {
         description = "DPM ERROR";
-        return DPMError::MODULE_NOT_LOADED;
+        return DPMErrorCategory::MODULE_NOT_LOADED;
     }
 
     // Clear any previous error state and handle any residual failure
     const char* pre_error = dlerror();
     if ( pre_error != nullptr ) {
         description = pre_error;
-        return DPMError::UNDEFINED_ERROR;
+        return DPMErrorCategory::UNDEFINED_ERROR;
     }
 
     // declare a function pointer type to hold the module symbol to execute
@@ -191,16 +328,16 @@ DPMError ModuleLoader::get_module_description( void * module_handle, std::string
     DescriptionFn description_fn = (DescriptionFn) dlsym( module_handle, "dpm_get_description" );
 
     // check for errors from dlsym
-    const char* error = dlerror();
+    const char * error = dlerror();
     if ( error != nullptr ) {
         description = "ERROR";
-        return DPMError::SYMBOL_NOT_FOUND;
+        return DPMErrorCategory::SYMBOL_NOT_FOUND;
     }
 
     // check if the void pointer was populated
     if ( description_fn == nullptr ) {
         description = "ERROR";
-        return DPMError::INVALID_MODULE;
+        return DPMErrorCategory::INVALID_MODULE;
     }
 
     // execute the loaded symbol
@@ -209,18 +346,21 @@ DPMError ModuleLoader::get_module_description( void * module_handle, std::string
     // check the return, and throw an error if it's a null value
     if ( desc == nullptr ) {
         description = "MODULE ERROR";
-        return DPMError::INVALID_MODULE;
+        return DPMErrorCategory::INVALID_MODULE;
     }
 
+    // Set the description string with the result
+    description = desc;
+
     // if you made it here, assume success
-    return DPMError::SUCCESS;
+    return DPMErrorCategory::SUCCESS;
 }
 
-DPMError ModuleLoader::validate_module_interface( void* module_handle, std::vector<std::string>& missing_symbols ) const
+DPMErrorCategory ModuleLoader::validate_module_interface( void* module_handle, std::vector<std::string>& missing_symbols ) const
 {
     // validate that the module is even loaded
     if ( !module_handle ) {
-        return DPMError::MODULE_NOT_LOADED;
+        return DPMErrorCategory::MODULE_NOT_LOADED;
     }
 
     // ensure our starting point of missing symbols is empty
@@ -232,7 +372,7 @@ DPMError ModuleLoader::validate_module_interface( void* module_handle, std::vect
     // check for any residual lingering errors
     const char * pre_error = dlerror();
     if ( pre_error != nullptr ) {
-        return DPMError::UNDEFINED_ERROR;
+        return DPMErrorCategory::UNDEFINED_ERROR;
     }
 
     // declare a function pointer type to hold the module symbol to execute
@@ -255,9 +395,9 @@ DPMError ModuleLoader::validate_module_interface( void* module_handle, std::vect
 
     // if there are no missing symbols, return successfully -- the module has a valid API
     if ( missing_symbols.empty() ) {
-        return DPMError::SUCCESS;
+        return DPMErrorCategory::SUCCESS;
     }
 
     // if not successful, the module's API is invalid and return the appropriate error code
-    return DPMError::INVALID_MODULE;
+    return DPMErrorCategory::INVALID_MODULE;
 }

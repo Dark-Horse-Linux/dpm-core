@@ -1,10 +1,10 @@
 /**
-* @file dpm_interface.hpp
- * @brief Interface declarations for the DPM command-line functionality
+* @file dpm_interface_helpers.hpp
+ * @brief Helper functions for DPM command-line interface
  *
- * Defines the public interface methods that provide human-readable interaction
- * with the DPM core functionality, including module path validation and
- * module listing capabilities.
+ * Provides utility functions for command-line argument parsing and
+ * data structures for representing command arguments in a structured format.
+ * These helpers are used by the main DPM interface to process user input.
  *
  * @copyright Copyright (c) 2025 SILO GROUP LLC
  * @author Chris Punches <chris.punches@silogroup.org>
@@ -29,27 +29,16 @@
  */
 
 #pragma once
+#include <string>
 #include <iostream>
 #include <getopt.h>
-#include <vector>
-#include <dlfcn.h>
-#include <iomanip>
-#include <filesystem>
 
-#include "error.hpp"
-#include "ModuleLoader.hpp"
-#include "dpm_interface_helpers.hpp"
+// data structure for supplied arguments
+struct CommandArgs {
+    std::string module_path;
+    std::string module_name;
+    std::string command;  // All arguments combined into a single command string
+};
 
-/*
- *
- *  DPM Interface methods.  These are wrappers of DPM functionality that are meant to handle user view, turning
- *  error codes into human-presentable information, etc.  Features are defined internally, these will only ever be
- *  wrappers of existing features to provide the human/cli interface.
- *
- */
-
-// check if the module path exists
-int main_check_module_path(const ModuleLoader& loader);
-
-// list the modules
-int main_list_modules(const ModuleLoader& loader);
+// parse dpm cli arguments into a serialized structure
+CommandArgs parse_args( int argc, char * argv[] );
