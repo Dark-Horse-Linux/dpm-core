@@ -15,10 +15,14 @@ add_executable(
         include/dpm_interface_helpers.hpp
         src/dpm_interface_helpers.cpp
         src/handlers.cpp
+        src/module_interface.cpp
 )
 
 target_include_directories(dpm PRIVATE include)
 target_link_libraries(dpm dl)
+
+# Export symbols for dynamic loading
+target_link_options(dpm PRIVATE -rdynamic)
 
 # Add the info module
 add_library(info MODULE modules/info.cpp)

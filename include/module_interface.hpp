@@ -56,4 +56,7 @@ extern "C" {
 
     // Module description information
     const char* dpm_get_description(void);
+
+    // Callback function exposed by DPM core for modules to use
+    int dpm_core_callback(const char* action, const char* data);
 }
