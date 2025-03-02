@@ -1,5 +1,5 @@
 /**
-* @file handlers.hpp
+ * @file handlers.hpp
  * @brief Error handling functions for the DPM system
  *
  * Defines specialized handler functions for each error category in the DPM
@@ -29,8 +29,8 @@
  */
 
 #pragma once
-#include <iostream>
 
+#include <iostream>
 #include "error.hpp"
 
 // fatal error routing method

@@ -6,16 +6,15 @@ set(CMAKE_CXX_STANDARD 20)
 # Create modules directory
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
 
-add_executable(
-        dpm
+add_executable(dpm
         src/dpm.cpp
         src/ModuleLoader.cpp
         src/dpm_interface.cpp
         src/error.cpp
-        include/dpm_interface_helpers.hpp
         src/dpm_interface_helpers.cpp
         src/handlers.cpp
         src/module_interface.cpp
+        src/ConfigManager.cpp
 )
 
 target_include_directories(dpm PRIVATE include)

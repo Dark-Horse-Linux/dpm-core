@@ -1,3 +1,33 @@
+/**
+ * @file dpm_interface_helpers.cpp
+ * @brief Implementation of helper functions for DPM command-line interface
+ *
+ * Implements utility functions for command-line argument parsing and provides
+ * data structures for representing command arguments in a structured format.
+ * These helpers are used by the main DPM interface to process user input.
+ *
+ * @copyright Copyright (c) 2025 SILO GROUP LLC
+ * @author Chris Punches <chris.punches@silogroup.org>
+ *
+ * Part of the Dark Horse Linux Package Manager (DPM)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * For bug reports or contributions, please contact the dhlp-contributors
+ * mailing list at: https://lists.darkhorselinux.org/mailman/listinfo/dhlp-contributors
+ */
+
 #include "dpm_interface_helpers.hpp"
 
 /**
@@ -26,7 +56,7 @@
 CommandArgs parse_args(int argc, char* argv[])
 {
     CommandArgs args;
-    args.module_path = "/usr/lib/dpm/modules/";  // Set to same default as ModuleLoader
+    args.module_path = "";  // Start with empty path to allow for config fallback
 
     static struct option long_options[] = {
         {"module-path", required_argument, 0, 'm'},
@@ -42,11 +72,10 @@ CommandArgs parse_args(int argc, char* argv[])
                 args.module_path = optarg;
                 break;
             case 'h':
-                std::cout << "Usage: dpm [options] [module-name] [module args...]\n\n"
+                std::cout << "Usage: dpm [options] [module-name] [module args...] [module-command] [command-args]\n\n"
                           << "Options:\n\n"
-                          << "  -m, --module-path PATH   Path to DPM modules\n"
-                          << "  -h, --help              Show this help message\n\n"
-                          << "If no module is specified, available modules will be listed.\n\n";
+                          << "  -m, --module-path PATH   Path to DPM modules (overrides config)\n"
+                          << "  -h, --help              Show this help message\n\n";
                 exit(0);
             case '?':
                 exit(1);

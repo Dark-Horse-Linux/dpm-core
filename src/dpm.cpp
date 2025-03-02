@@ -1,5 +1,5 @@
 /**
-* @file dpm.cpp
+ * @file dpm.cpp
  * @brief Main entry point for the Dark Horse Package Manager (DPM)
  *
  * Implements the core command-line interface and module routing functionality
@@ -28,13 +28,14 @@
  */
 
 #include <iostream>
-#include <handlers.hpp>
 #include <dlfcn.h>
 
+#include <handlers.hpp>
 #include "ModuleLoader.hpp"
 #include "dpm_interface.hpp"
 #include "dpm_interface_helpers.hpp"
 #include "error.hpp"
+#include "ConfigManager.hpp"
 
 /*
  *   DPM serves three functions:
@@ -59,19 +60,44 @@ int default_behavior(const ModuleLoader& loader)
  * @param argv Array of C-style strings containing the arguments
  * @return Exit code indicating success (0) or failure (non-zero)
  */
-int main( int argc, char* argv[] )
+int main(int argc, char* argv[])
 {
+    // Load configuration files
+    if (!g_config_manager.loadConfigurations()) {
+        std::cerr << "Warning: Some configuration files could not be loaded." << std::endl;
+        // Continue execution, as we might be able to use default values
+    }
+
     // process the arguments suppplied to DPM and provide
     // an object that contains them for command and routing
-    // processing
-    auto args = parse_args( argc, argv );
+    // processing - this will include any module_path from CLI
+    auto args = parse_args(argc, argv);
 
-    // create a module loader object at the supplied or default path
-    ModuleLoader loader( args.module_path );
+    // Determine the module path (CLI arg > config > default)
+    std::string module_path;
+
+    // If CLI argument was provided, use it
+    if (!args.module_path.empty()) {
+        module_path = args.module_path;
+    }
+    // Otherwise, check configuration file
+    else {
+        const char* config_module_path = g_config_manager.getConfigValue("modules", "module_path");
+        if (config_module_path) {
+            module_path = config_module_path;
+        }
+        // Finally, use default if nothing else is available
+        else {
+            module_path = "/usr/lib/dpm/modules/";
+        }
+    }
+
+    // create a module loader object with the determined path
+    ModuleLoader loader(module_path);
 
     // check the module path for the loader object
-    int path_check_result = main_check_module_path( loader );
-    if ( path_check_result != 0 ) {
+    int path_check_result = main_check_module_path(loader);
+    if (path_check_result != 0) {
         // exit if there's an error and ensure
         // it has an appropriate return code
         return 1;
@@ -79,8 +105,8 @@ int main( int argc, char* argv[] )
 
     // if no module is provided to execute, then trigger the default
     // dpm behaviour
-    if ( args.module_name.empty() ) {
-        return default_behavior( loader );
+    if (args.module_name.empty()) {
+        return default_behavior(loader);
     }
 
     // execute the module
@@ -94,5 +120,5 @@ int main( int argc, char* argv[] )
     result.module_path = extracted_path.c_str();
 
     // pair result with a message and exit with the appropriate error code
-    return handle_error( result );
+    return handle_error(result);
 }

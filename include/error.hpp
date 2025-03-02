@@ -1,5 +1,5 @@
 /**
-* @file error.hpp
+ * @file error.hpp
  * @brief Error handling system for the DPM utility
  *
  * Defines the error categories, error context structure, and utility
@@ -29,6 +29,7 @@
  */
 
 #pragma once
+
 #include <iostream>
 
 // global errors for the core DPM routing/execution component
@@ -59,4 +60,3 @@ typedef struct {
 
 // shorthand for creating a FlexDPMError instance
 FlexDPMError make_error( DPMErrorCategory error_category );
-

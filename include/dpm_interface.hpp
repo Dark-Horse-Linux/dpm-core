@@ -1,5 +1,5 @@
 /**
-* @file dpm_interface.hpp
+ * @file dpm_interface.hpp
  * @brief Interface declarations for the DPM command-line functionality
  *
  * Defines the public interface methods that provide human-readable interaction
@@ -30,11 +30,11 @@
 
 #pragma once
 #include <iostream>
-#include <getopt.h>
 #include <vector>
-#include <dlfcn.h>
 #include <iomanip>
 #include <filesystem>
+#include <dlfcn.h>
+#include <getopt.h>
 
 #include "error.hpp"
 #include "ModuleLoader.hpp"

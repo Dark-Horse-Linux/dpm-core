@@ -1,5 +1,5 @@
 /**
-* @file dpm_interface_helpers.hpp
+ * @file dpm_interface_helpers.hpp
  * @brief Helper functions for DPM command-line interface
  *
  * Provides utility functions for command-line argument parsing and
@@ -29,6 +29,7 @@
  */
 
 #pragma once
+
 #include <string>
 #include <iostream>
 #include <getopt.h>
