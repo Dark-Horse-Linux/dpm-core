@@ -30,6 +30,10 @@
 
 #include "dpm_interface_helpers.hpp"
 
+// Define the static constants
+const std::string DPMDefaultPaths::MODULE_PATH = "/usr/lib/dpm/modules/";
+const std::string DPMDefaultPaths::CONFIG_DIR = "/etc/dpm/conf.d/";
+
 /**
  * Parse command line arguments for DPM.
  *
@@ -56,7 +60,7 @@
 CommandArgs parse_args(int argc, char* argv[])
 {
     CommandArgs args;
-    args.module_path = "";  // Start with empty path to allow for config fallback
+    args.module_path = "";
 
     static struct option long_options[] = {
         {"module-path", required_argument, 0, 'm'},
@@ -74,7 +78,7 @@ CommandArgs parse_args(int argc, char* argv[])
             case 'h':
                 std::cout << "Usage: dpm [options] [module-name] [module args...] [module-command] [command-args]\n\n"
                           << "Options:\n\n"
-                          << "  -m, --module-path PATH   Path to DPM modules (overrides config)\n"
+                          << "  -m, --module-path PATH   Path to DPM modules (overrides modules.modules_path in config)\n"
                           << "  -h, --help              Show this help message\n\n";
                 exit(0);
             case '?':

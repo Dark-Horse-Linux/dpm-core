@@ -43,10 +43,12 @@
 #include <string.h>
 #include <dirent.h>
 
+#include "dpm_interface_helpers.hpp"
+
 class ConfigManager {
     public:
         // Constructor
-        ConfigManager(const std::string& config_dir = "/etc/dpm/conf.d/");
+        ConfigManager( const std::string& config_dir = DPMDefaultPaths::CONFIG_DIR );
 
         // Load all configuration files from the config directory
         bool loadConfigurations();

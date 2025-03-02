@@ -43,3 +43,9 @@ struct CommandArgs {
 
 // parse dpm cli arguments into a serialized structure
 CommandArgs parse_args( int argc, char * argv[] );
+
+// default system paths
+struct DPMDefaultPaths {
+    static const std::string MODULE_PATH;
+    static const std::string CONFIG_DIR;
+};

@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 {
     // Load configuration files
     if (!g_config_manager.loadConfigurations()) {
-        std::cerr << "Warning: Some configuration files could not be loaded." << std::endl;
+        std::cerr << "Warning: No configuration files present or loaded from '" <<  DPMDefaultPaths::CONFIG_DIR << "*.conf', reverting to defaults." << std::endl;
         // Continue execution, as we might be able to use default values
     }
 
@@ -79,16 +79,15 @@ int main(int argc, char* argv[])
     // If CLI argument was provided, use it
     if (!args.module_path.empty()) {
         module_path = args.module_path;
-    }
-    // Otherwise, check configuration file
-    else {
+    } else {
+        // Otherwise, check configuration file
         const char* config_module_path = g_config_manager.getConfigValue("modules", "module_path");
         if (config_module_path) {
             module_path = config_module_path;
         }
         // Finally, use default if nothing else is available
         else {
-            module_path = "/usr/lib/dpm/modules/";
+            module_path = DPMDefaultPaths::MODULE_PATH;
         }
     }
 

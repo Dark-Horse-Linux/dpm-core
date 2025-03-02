@@ -65,23 +65,23 @@ int main_check_module_path(const ModuleLoader& loader)
     loader.get_module_path(path);
 
     if (!std::filesystem::exists(path)) {
-        std::cerr << "Module path does not exist: " << path << std::endl;
+        std::cerr << "FATAL: modules.modules_path does not exist: " << path << std::endl;
         return 1;
     }
 
     if (!std::filesystem::is_directory(path)) {
-        std::cerr << "Module path is not a directory: " << path << std::endl;
+        std::cerr << "FATAL: modules.modules_path is not a directory: " << path << std::endl;
         return 1;
     }
 
     try {
         auto perms = std::filesystem::status(path).permissions();
         if ((perms & std::filesystem::perms::owner_read) == std::filesystem::perms::none) {
-            std::cerr << "Permission denied: " << path << std::endl;
+            std::cerr << "FATAL: Permission denied: " << path << std::endl;
             return 1;
         }
     } catch (const std::filesystem::filesystem_error&) {
-        std::cerr << "Permission denied: " << path << std::endl;
+        std::cerr << "FATAL: Permission denied: " << path << std::endl;
         return 1;
     }
 
@@ -122,18 +122,18 @@ int main_list_modules(const ModuleLoader& loader)
     // set the module path
     DPMErrorCategory get_path_error = loader.get_module_path(path);
     if ( get_path_error != DPMErrorCategory::SUCCESS ) {
-        std::cerr << "Failed to get module path" << std::endl;
+        std::cerr << "Failed to get modules.modules_path" << std::endl;
         return 1;
     }
 
     DPMErrorCategory list_error = loader.list_available_modules(modules);
     if (list_error != DPMErrorCategory::SUCCESS) {
-        std::cerr << "No modules found in: " << path << std::endl;
+        std::cerr << "FATAL: No modules found in modules.modules_path: " << path << std::endl;
         return 1;
     }
 
     if (modules.empty()) {
-        std::cout << "No modules found in '" << path << "'." << std::endl;
+        std::cerr << "FATAL: No modules found in modules.modules_path: '" << path << "'." << std::endl;
         return 0;
     }
 
@@ -155,7 +155,7 @@ int main_list_modules(const ModuleLoader& loader)
     }
 
     if (valid_modules.empty()) {
-        std::cout << "No valid modules found in '" << path << "'." << std::endl;
+        std::cerr << "FATAL: No valid modules found in modules.modules_path: '" << path << "'." << std::endl;
         return 0;
     }
 
@@ -193,7 +193,7 @@ int main_list_modules(const ModuleLoader& loader)
     const int column_spacing = 4;
 
     // Display the table header
-    std::cout << "\nAvailable modules in '" << path << "':" << std::endl << std::endl;
+    std::cout << "\nAvailable modules in modules.modules_path: '" << path << "':" << std::endl << std::endl;
     std::cout << std::left << std::setw(max_name_length + column_spacing) << "MODULE"
               << std::setw(max_version_length + column_spacing) << "VERSION"
               << "DESCRIPTION" << std::endl;
