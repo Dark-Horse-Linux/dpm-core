@@ -30,3 +30,13 @@ set_target_properties(info PROPERTIES
         SUFFIX ".so"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"
 )
+
+# Installation rules
+install(TARGETS dpm DESTINATION bin)
+install(DIRECTORY DESTINATION /etc/dpm/conf.d)
+install(FILES ${CMAKE_SOURCE_DIR}/data/modules.conf DESTINATION /etc/dpm/conf.d)
+
+# Install all .so files from build/modules to the module path
+install(DIRECTORY ${CMAKE_BINARY_DIR}/modules/
+        DESTINATION /usr/lib/dpm/modules
+        FILES_MATCHING PATTERN "*.so")
