@@ -34,7 +34,11 @@ set_target_properties(info PROPERTIES
 # Installation rules
 install(TARGETS dpm DESTINATION bin)
 install(DIRECTORY DESTINATION /etc/dpm/conf.d)
-install(FILES ${CMAKE_SOURCE_DIR}/data/modules.conf DESTINATION /etc/dpm/conf.d)
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/data/"
+        DESTINATION /etc/dpm/conf.d
+        FILES_MATCHING
+        PATTERN "*.conf"
+)
 
 # Install all .so files from build/modules to the module path
 install(DIRECTORY ${CMAKE_BINARY_DIR}/modules/

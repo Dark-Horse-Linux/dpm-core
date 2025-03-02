@@ -32,6 +32,21 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <fstream>
+#include <sys/utsname.h>
+
+// Define version macros
+#define MODULE_VERSION "0.1.0"
+#define DPM_VERSION "0.1.0"
+
+// Command enum for switch case
+enum Command {
+    CMD_UNKNOWN,
+    CMD_HELP,
+    CMD_VERSION,
+    CMD_SYSTEM,
+    CMD_CONFIG
+};
 
 // Declaration of the DPM config function we want to call
 extern "C" const char* dpm_get_config(const char* section, const char* key);
@@ -41,7 +56,7 @@ extern "C" const char* dpm_get_config(const char* section, const char* key);
 
 // Version information
 extern "C" const char* dpm_module_get_version(void) {
-    return "0.1.0";
+    return MODULE_VERSION;
 }
 
 // Module description
@@ -49,81 +64,144 @@ extern "C" const char* dpm_get_description(void) {
     return "DPM Info Module - Provides information about the DPM system";
 }
 
+// Function to detect architecture using uname
+std::string detect_architecture() {
+    struct utsname system_info;
+
+    if (uname(&system_info) == -1) {
+        return "Unknown";
+    }
+
+    return system_info.machine;
+}
+
+// Function to detect OS
+std::string detect_os() {
+    struct utsname system_info;
+
+    if (uname(&system_info) == -1) {
+        return "Unknown";
+    }
+
+    std::string os = system_info.sysname;
+
+    // For Linux, try to get distribution information
+    if (os == "Linux") {
+        std::ifstream os_release("/etc/os-release");
+        if (os_release.is_open()) {
+            std::string line;
+            std::string distro_name;
+            std::string distro_version;
+
+            while (std::getline(os_release, line)) {
+                if (line.find("NAME=") == 0) {
+                    distro_name = line.substr(5);
+                    // Remove quotes if present
+                    if (distro_name.front() == '"' && distro_name.back() == '"') {
+                        distro_name = distro_name.substr(1, distro_name.length() - 2);
+                    }
+                }
+                if (line.find("VERSION_ID=") == 0) {
+                    distro_version = line.substr(11);
+                    // Remove quotes if present
+                    if (distro_version.front() == '"' && distro_version.back() == '"') {
+                        distro_version = distro_version.substr(1, distro_version.length() - 2);
+                    }
+                }
+            }
+
+            if (!distro_name.empty()) {
+                os += " (" + distro_name;
+                if (!distro_version.empty()) {
+                    os += " " + distro_version;
+                }
+                os += ")";
+            }
+        }
+    }
+
+    return os;
+}
+
+// Command handler functions
+int cmd_help(int argc, char** argv) {
+    std::cout << "DPM Info Module - Provides information about the DPM system\n\n";
+    std::cout << "Available commands:\n\n";
+    std::cout << "  version    - Display DPM version information\n";
+    std::cout << "  system     - Display system information\n";
+    std::cout << "  config     - Display configuration information\n";
+    std::cout << "  help       - Display this help message\n";
+    return 0;
+}
+
+int cmd_version(int argc, char** argv) {
+    std::cout << "DPM Version: " << DPM_VERSION << "\n";
+    std::cout << "Build Date: " << __DATE__ << "\n";
+    std::cout << "Build Time: " << __TIME__ << "\n";
+    return 0;
+}
+
+int cmd_system(int argc, char** argv) {
+    std::cout << "System Information:\n";
+    std::cout << "  OS: " << detect_os() << "\n";
+    std::cout << "  Architecture: " << detect_architecture() << "\n";
+    return 0;
+}
+
+int cmd_config(int argc, char** argv) {
+    const char* module_path = dpm_get_config("modules", "module_path");
+    std::cout << "Configuration Information:\n";
+    std::cout << "  Module Path: " << (module_path ? module_path : "Not configured") << "\n";
+    return 0;
+}
+
+int cmd_unknown(const char* command, int argc, char** argv) {
+    std::cerr << "Unknown command: " << (command ? command : "") << "\n";
+    std::cerr << "Run 'dpm info help' for a list of available commands\n";
+    return 1;
+}
+
+// Function to parse command string to enum
+Command parse_command(const char* cmd_str) {
+    if (cmd_str == nullptr || strlen(cmd_str) == 0) {
+        return CMD_HELP;
+    }
+
+    if (strcmp(cmd_str, "help") == 0) {
+        return CMD_HELP;
+    }
+    else if (strcmp(cmd_str, "version") == 0) {
+        return CMD_VERSION;
+    }
+    else if (strcmp(cmd_str, "system") == 0) {
+        return CMD_SYSTEM;
+    }
+    else if (strcmp(cmd_str, "config") == 0) {
+        return CMD_CONFIG;
+    }
+
+    return CMD_UNKNOWN;
+}
+
 // Main entry point that will be called by DPM
 extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
-    // Handle the case when no command is provided
-    if (command == nullptr || strlen(command) == 0) {
-        std::cout << "DPM Info Module - Provides information about the DPM system\n";
-        std::cout << "Usage: dpm info <command> [args]\n";
-        std::cout << "Available commands:\n";
-        std::cout << "  version    - Display DPM version information\n";
-        std::cout << "  system     - Display system information\n";
-        std::cout << "  config     - Display configuration information\n";
-        std::cout << "  help       - Display this help message\n";
-        return 0;
-    }
+    Command cmd = parse_command(command);
 
-    // Convert command to string for easier comparison
-    std::string cmd(command);
+    switch (cmd) {
+        case CMD_VERSION:
+            return cmd_version(argc, argv);
 
-    if (cmd == "version") {
-        std::cout << "DPM Version: 0.1.0\n";
-        std::cout << "Build Date: " << __DATE__ << "\n";
-        std::cout << "Build Time: " << __TIME__ << "\n";
-        return 0;
-    }
-    else if (cmd == "system") {
-        // Request config information using the direct method
-        const char* module_path = dpm_get_config("modules", "module_path");
+        case CMD_SYSTEM:
+            return cmd_system(argc, argv);
 
-        std::cout << "System Information:\n";
-        std::cout << "  OS: "
-#ifdef _WIN32
-            "Windows"
-#elif __APPLE__
-            "macOS"
-#elif __linux__
-            "Linux"
-#else
-            "Unknown"
-#endif
-            << "\n";
-        std::cout << "  Architecture: "
-#ifdef __x86_64__
-            "x86_64"
-#elif __i386__
-            "x86"
-#elif __arm__
-            "ARM"
-#elif __aarch64__
-            "ARM64"
-#else
-            "Unknown"
-#endif
-            << "\n";
-        std::cout << "  Module Path: " << (module_path ? module_path : "Not configured") << "\n";
-        return 0;
-    }
-    else if (cmd == "config") {
-        // Retrieve module path configuration
-        const char* module_path = dpm_get_config("modules", "module_path");
+        case CMD_CONFIG:
+            return cmd_config(argc, argv);
 
-        std::cout << "Configuration Information:\n";
-        std::cout << "  Module Path: " << (module_path ? module_path : "Not configured") << "\n";
-        return 0;
-    }
-    else if (cmd == "help") {
-        std::cout << "DPM Info Module - Provides information about the DPM system\n";
-        std::cout << "Available commands:\n";
-        std::cout << "  version    - Display DPM version information\n";
-        std::cout << "  system     - Display system information\n";
-        std::cout << "  config     - Display configuration information\n";
-        std::cout << "  help       - Display this help message\n";
-        return 0;
-    }
-    else {
-        std::cerr << "Unknown command: " << cmd << "\n";
-        std::cerr << "Run 'dpm info help' for a list of available commands\n";
-        return 1;
+        case CMD_HELP:
+            return cmd_help(argc, argv);
+
+        case CMD_UNKNOWN:
+        default:
+            return cmd_unknown(command, argc, argv);
     }
 }
