@@ -10,12 +10,10 @@ https://dpm.darkhorselinux.org
 
 To build DPM from source, you'll need the following dependencies:
 
+
 - GCC/G++ (version 10 or later, supporting C++20)
 - CMake (version 3.22 or later)
 - Make
-- libstdc++ (C++ standard library)
-- Linux headers
-- dlopen/dlsym support (provided by libdl)
 
 ## Building from Source
 
