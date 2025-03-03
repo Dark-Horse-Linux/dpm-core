@@ -34,13 +34,28 @@
 // Global configuration manager instance
 ConfigManager g_config_manager;
 
-ConfigManager::ConfigManager(const std::string& config_dir)
-    : _config_dir(config_dir)
+ConfigManager::ConfigManager()
+    : _config_dir(DPMDefaults::CONFIG_DIR)
 {
     // Ensure the config directory ends with a slash
     if (!_config_dir.empty() && _config_dir.back() != '/') {
         _config_dir += '/';
     }
+}
+
+void ConfigManager::setConfigDir(const std::string& config_dir)
+{
+    _config_dir = config_dir;
+
+    // Ensure the config directory ends with a slash
+    if (!_config_dir.empty() && _config_dir.back() != '/') {
+        _config_dir += '/';
+    }
+}
+
+std::string ConfigManager::getConfigDir() const
+{
+    return _config_dir;
 }
 
 std::string ConfigManager::trimWhitespace(const std::string& str) const

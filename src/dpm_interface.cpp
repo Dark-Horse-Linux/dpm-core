@@ -65,23 +65,23 @@ int main_check_module_path(const ModuleLoader& loader)
     loader.get_module_path(path);
 
     if (!std::filesystem::exists(path)) {
-        std::cerr << "FATAL: modules.modules_path does not exist: " << path << std::endl;
+        g_logger.log(LoggingLevels::FATAL, "modules.modules_path does not exist: " + path);
         return 1;
     }
 
     if (!std::filesystem::is_directory(path)) {
-        std::cerr << "FATAL: modules.modules_path is not a directory: " << path << std::endl;
+        g_logger.log(LoggingLevels::FATAL, "modules.modules_path is not a directory: " + path);
         return 1;
     }
 
     try {
         auto perms = std::filesystem::status(path).permissions();
         if ((perms & std::filesystem::perms::owner_read) == std::filesystem::perms::none) {
-            std::cerr << "FATAL: Permission denied: " << path << std::endl;
+            g_logger.log(LoggingLevels::FATAL, "Permission denied: " + path);
             return 1;
         }
     } catch (const std::filesystem::filesystem_error&) {
-        std::cerr << "FATAL: Permission denied: " << path << std::endl;
+        g_logger.log(LoggingLevels::FATAL, "Permission denied: " + path);
         return 1;
     }
 
@@ -122,18 +122,18 @@ int main_list_modules(const ModuleLoader& loader)
     // set the module path
     DPMErrorCategory get_path_error = loader.get_module_path(path);
     if ( get_path_error != DPMErrorCategory::SUCCESS ) {
-        std::cerr << "Failed to get modules.modules_path" << std::endl;
+        g_logger.log(LoggingLevels::FATAL, "Failed to get modules.modules_path");
         return 1;
     }
 
     DPMErrorCategory list_error = loader.list_available_modules(modules);
     if (list_error != DPMErrorCategory::SUCCESS) {
-        std::cerr << "FATAL: No modules found in modules.modules_path: " << path << std::endl;
+        g_logger.log(LoggingLevels::FATAL, "No modules found in modules.modules_path: " + path);
         return 1;
     }
 
     if (modules.empty()) {
-        std::cerr << "FATAL: No modules found in modules.modules_path: '" << path << "'." << std::endl;
+        g_logger.log(LoggingLevels::FATAL, "No modules found in modules.modules_path: '" + path + "'.");
         return 0;
     }
 
@@ -154,8 +154,8 @@ int main_list_modules(const ModuleLoader& loader)
         dlclose(handle);
     }
 
-    if (valid_modules.empty()) {
-        std::cerr << "FATAL: No valid modules found in modules.modules_path: '" << path << "'." << std::endl;
+    if ( valid_modules.empty() ) {
+        g_logger.log(LoggingLevels::FATAL, "No valid modules found in modules.modules_path: '" + path + "'.");
         return 0;
     }
 
@@ -193,7 +193,7 @@ int main_list_modules(const ModuleLoader& loader)
     const int column_spacing = 4;
 
     // Display the table header
-    std::cout << "\nAvailable modules in modules.modules_path: '" << path << "':" << std::endl << std::endl;
+    g_logger.log(LoggingLevels::DEBUG, "\nAvailable modules in modules.modules_path: '" + path + "':\n");
     std::cout << std::left << std::setw(max_name_length + column_spacing) << "MODULE"
               << std::setw(max_version_length + column_spacing) << "VERSION"
               << "DESCRIPTION" << std::endl;

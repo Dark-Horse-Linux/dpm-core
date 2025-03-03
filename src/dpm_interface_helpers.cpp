@@ -30,9 +30,7 @@
 
 #include "dpm_interface_helpers.hpp"
 
-// Define the static constants
-const std::string DPMDefaultPaths::MODULE_PATH = "/usr/lib/dpm/modules/";
-const std::string DPMDefaultPaths::CONFIG_DIR = "/etc/dpm/conf.d/";
+
 
 /**
  * Parse command line arguments for DPM.
@@ -47,6 +45,7 @@ const std::string DPMDefaultPaths::CONFIG_DIR = "/etc/dpm/conf.d/";
  *
  * The function handles the following arguments:
  * - ``-m, --module-path PATH``: Sets the directory path where DPM modules are located
+ * - ``-c, --config-dir PATH``: Sets the directory path where DPM configuration files are located
  * - ``-h, --help``: Displays a help message and exits
  *
  * Additional arguments are processed as follows:
@@ -61,25 +60,31 @@ CommandArgs parse_args(int argc, char* argv[])
 {
     CommandArgs args;
     args.module_path = "";
+    args.config_dir = "";
 
     static struct option long_options[] = {
         {"module-path", required_argument, 0, 'm'},
+        {"config-dir", required_argument, 0, 'c'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
     int opt;
     int option_index = 0;
-    while ((opt = getopt_long(argc, argv, "m:h", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:c:h", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'm':
                 args.module_path = optarg;
+                break;
+            case 'c':
+                args.config_dir = optarg;
                 break;
             case 'h':
                 std::cout << "Usage: dpm [options] [module-name] [module args...] [module-command] [command-args]\n\n"
                           << "Options:\n\n"
                           << "  -m, --module-path PATH   Path to DPM modules (overrides modules.modules_path in config)\n"
-                          << "  -h, --help              Show this help message\n\n";
+                          << "  -c, --config-dir PATH    Path to DPM configuration directory\n"
+                          << "  -h, --help               Show this help message\n\n";
                 exit(0);
             case '?':
                 exit(1);

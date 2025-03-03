@@ -39,14 +39,6 @@
 #define MODULE_VERSION "0.1.0"
 #define DPM_VERSION "0.1.0"
 
-// Command enum for switch case
-enum Command {
-    CMD_UNKNOWN,
-    CMD_HELP,
-    CMD_VERSION,
-    CMD_SYSTEM,
-    CMD_CONFIG
-};
 
 // Declaration of the DPM config function we want to call
 extern "C" const char* dpm_get_config(const char* section, const char* key);
@@ -63,6 +55,15 @@ extern "C" const char* dpm_module_get_version(void) {
 extern "C" const char* dpm_get_description(void) {
     return "DPM Info Module - Provides information about the DPM system";
 }
+
+// Command enum for switch case
+enum Command {
+    CMD_UNKNOWN,
+    CMD_HELP,
+    CMD_VERSION,
+    CMD_SYSTEM,
+    CMD_CONFIG
+};
 
 // Function to detect architecture using uname
 std::string detect_architecture() {

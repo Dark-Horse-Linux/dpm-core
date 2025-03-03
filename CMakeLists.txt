@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD 20)
 # Create modules directory
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
 
-add_executable(dpm
+add_executable(
+        dpm
         src/dpm.cpp
         src/ModuleLoader.cpp
         src/dpm_interface.cpp
@@ -15,6 +16,7 @@ add_executable(dpm
         src/handlers.cpp
         src/module_interface.cpp
         src/ConfigManager.cpp
+        src/Logger.cpp
 )
 
 target_include_directories(dpm PRIVATE include)
@@ -25,7 +27,8 @@ target_link_options(dpm PRIVATE -rdynamic)
 
 # Add the info module
 add_library(info MODULE modules/info.cpp)
-set_target_properties(info PROPERTIES
+set_target_properties(
+        info PROPERTIES
         PREFIX ""
         SUFFIX ".so"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"
@@ -34,13 +37,16 @@ set_target_properties(info PROPERTIES
 # Installation rules
 install(TARGETS dpm DESTINATION bin)
 install(DIRECTORY DESTINATION /etc/dpm/conf.d)
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/data/"
+install(
+        DIRECTORY "${CMAKE_SOURCE_DIR}/data/"
         DESTINATION /etc/dpm/conf.d
         FILES_MATCHING
         PATTERN "*.conf"
 )
 
 # Install all .so files from build/modules to the module path
-install(DIRECTORY ${CMAKE_BINARY_DIR}/modules/
+install(
+        DIRECTORY ${CMAKE_BINARY_DIR}/modules/
         DESTINATION /usr/lib/dpm/modules
-        FILES_MATCHING PATTERN "*.so")
+        FILES_MATCHING PATTERN "*.so"
+)

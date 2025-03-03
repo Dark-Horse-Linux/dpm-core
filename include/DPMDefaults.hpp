@@ -1,10 +1,10 @@
 /**
-* @file dpm_interface_helpers.hpp
- * @brief Helper functions for DPM command-line interface
+ * @file DPMDefaults.hpp
+ * @brief Default configuration values for the DPM utility
  *
- * Provides utility functions for command-line argument parsing and
- * data structures for representing command arguments in a structured format.
- * These helpers are used by the main DPM interface to process user input.
+ * Defines the DPMDefaults structure which provides default configuration values
+ * for paths, logging settings, and other system-wide defaults used by the DPM
+ * utility when explicit configuration is not provided.
  *
  * @copyright Copyright (c) 2025 SILO GROUP LLC
  * @author Chris Punches <chris.punches@silogroup.org>
@@ -31,20 +31,22 @@
 #pragma once
 
 #include <string>
-#include <iostream>
-#include <getopt.h>
-
-#include "Logger.hpp"
 #include "LoggingLevels.hpp"
-#include "DPMDefaults.hpp"
 
-// data structure for supplied arguments
-struct CommandArgs {
-    std::string module_path;
-    std::string config_dir;
-    std::string module_name;
-    std::string command;
+// default system configuration
+struct DPMDefaults {
+    static const char* const    MODULE_PATH;
+    static const char* const    CONFIG_DIR;
+    static const char* const    LOG_FILE;
+    static const bool           write_to_log;
+    static const LoggingLevels  LOG_LEVEL;
 };
 
-// parse dpm cli arguments into a serialized structure
-CommandArgs parse_args( int argc, char * argv[] );
+// Initialize static constants
+inline const char * const   DPMDefaults::MODULE_PATH    = "/usr/lib/dpm/modules/";
+
+inline const char * const   DPMDefaults::CONFIG_DIR     = "/etc/dpm/conf.d/";
+
+inline const char * const   DPMDefaults::LOG_FILE       = "/var/log/dpm.log";
+inline const bool           DPMDefaults::write_to_log   = false;
+inline const LoggingLevels  DPMDefaults::LOG_LEVEL      = LoggingLevels::INFO;

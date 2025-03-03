@@ -39,6 +39,7 @@
 #include "error.hpp"
 #include "ModuleLoader.hpp"
 #include "dpm_interface_helpers.hpp"
+#include "Logger.hpp"
 
 /*
  *

@@ -36,6 +36,7 @@
 #include "dpm_interface_helpers.hpp"
 #include "error.hpp"
 #include "ConfigManager.hpp"
+#include "Logger.hpp"
 
 /*
  *   DPM serves three functions:
@@ -60,63 +61,93 @@ int default_behavior(const ModuleLoader& loader)
  * @param argv Array of C-style strings containing the arguments
  * @return Exit code indicating success (0) or failure (non-zero)
  */
-int main(int argc, char* argv[])
+int main( int argc, char* argv[] )
 {
-    // Load configuration files
-    if (!g_config_manager.loadConfigurations()) {
-        std::cerr << "Warning: No configuration files present or loaded from '" <<  DPMDefaultPaths::CONFIG_DIR << "*.conf', reverting to defaults." << std::endl;
-        // Continue execution, as we might be able to use default values
+    // process the arguments supplied to DPM and provide
+    // an object that contains them for command and routing
+    // processing
+    CommandArgs args = parse_args( argc, argv );
+
+    // Set the configuration directory path (CLI argument takes precedence over defaults)
+    if ( !args.config_dir.empty() )
+    {
+        // args.config_dir was supplied so set it
+        g_config_manager.setConfigDir( args.config_dir );
+    } else {
+        // args.config_dir was not supplied, so fall back to default path
+        g_config_manager.setConfigDir( DPMDefaults::CONFIG_DIR );
     }
 
-    // process the arguments suppplied to DPM and provide
-    // an object that contains them for command and routing
-    // processing - this will include any module_path from CLI
-    auto args = parse_args(argc, argv);
+    // Load configuration files
+    if ( !g_config_manager.loadConfigurations() )
+    {
+        // failed to load any configuration files, so alert the user
+        std::cerr << "Warning: No configuration files present or loaded from '"
+                  << g_config_manager.getConfigDir() << "*.conf', reverting to defaults." << std::endl;
+    }
+
+    // Configure logger (CLI args > config > defaults)
+    // Check configuration for log settings
+    bool config_write_to_log = g_config_manager.getConfigBool("logging", "write_to_log", DPMDefaults::write_to_log);
+    std::string config_log_file = g_config_manager.getConfigString("logging", "log_file", DPMDefaults::LOG_FILE);
+
+    // Parse log_level from config using the new method
+    std::string log_level_str = g_config_manager.getConfigString("logging", "log_level", "INFO");
+    LoggingLevels config_log_level = Logger::stringToLogLevel(log_level_str, DPMDefaults::LOG_LEVEL);
+
+    // Configure global logger instance
+    g_logger.setLogLevel(config_log_level);
+    g_logger.setWriteToLog(config_write_to_log);
+    g_logger.setLogFile(config_log_file);
 
     // Determine the module path (CLI arg > config > default)
     std::string module_path;
 
     // If CLI argument was provided, use it
-    if (!args.module_path.empty()) {
+    if ( !args.module_path.empty() )
+    {
         module_path = args.module_path;
     } else {
         // Otherwise, check configuration file
-        const char* config_module_path = g_config_manager.getConfigValue("modules", "module_path");
-        if (config_module_path) {
+        const char * config_module_path = g_config_manager.getConfigValue( "modules", "module_path" );
+        if ( config_module_path )
+        {
             module_path = config_module_path;
-        }
-        // Finally, use default if nothing else is available
-        else {
-            module_path = DPMDefaultPaths::MODULE_PATH;
+        } else {
+            // use default if nothing else is available
+            module_path = DPMDefaults::MODULE_PATH;
         }
     }
 
     // create a module loader object with the determined path
-    ModuleLoader loader(module_path);
+    ModuleLoader loader( module_path );
 
     // check the module path for the loader object
-    int path_check_result = main_check_module_path(loader);
-    if (path_check_result != 0) {
+    int path_check_result = main_check_module_path( loader );
+    if ( path_check_result != 0 )
+    {
         // exit if there's an error and ensure
         // it has an appropriate return code
-        return 1;
+        return path_check_result;
     }
 
     // if no module is provided to execute, then trigger the default
     // dpm behaviour
-    if (args.module_name.empty()) {
-        return default_behavior(loader);
+    if ( args.module_name.empty() )
+    {
+        return default_behavior( loader );
     }
 
     // execute the module
-    DPMErrorCategory execute_error = loader.execute_module(args.module_name, args.command);
+    DPMErrorCategory execute_error = loader.execute_module( args.module_name, args.command );
 
-    std::string extracted_path;
-    loader.get_module_path(extracted_path);
+    std::string absolute_modules_path;
+    loader.get_module_path( absolute_modules_path );
 
-    FlexDPMError result = make_error(execute_error);
+    // construct an error object
+    FlexDPMError result = make_error( execute_error );
     result.module_name = args.module_name.c_str();
-    result.module_path = extracted_path.c_str();
+    result.module_path = absolute_modules_path.c_str();
 
     // pair result with a message and exit with the appropriate error code
     return handle_error(result);

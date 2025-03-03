@@ -48,7 +48,13 @@
 class ConfigManager {
     public:
         // Constructor
-        ConfigManager( const std::string& config_dir = DPMDefaultPaths::CONFIG_DIR );
+        ConfigManager();
+
+        // Set the configuration directory
+        void setConfigDir(const std::string& config_dir);
+
+        // Get the current configuration directory
+        std::string getConfigDir() const;
 
         // Load all configuration files from the config directory
         bool loadConfigurations();
