@@ -29,28 +29,10 @@
 
 #include "module_interface.hpp"
 
-/**
- * @brief Function that provides direct access to configuration values
- *
- * This function allows modules to get configuration values directly.
- * It returns the string value from the configuration or nullptr if not found.
- *
- * @param section The configuration section name
- * @param key The configuration key within the section
- * @return The configuration value or nullptr if not found
- */
 extern "C" const char* dpm_get_config(const char* section, const char* key) {
     return g_config_manager.getConfigValue(section, key);
 }
 
-/**
- * @brief Direct logging function for modules
- *
- * This function allows modules to log messages directly through the DPM logger.
- *
- * @param level The log level as an integer (0=FATAL, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG)
- * @param message The message to log
- */
 extern "C" void dpm_log(int level, const char* message) {
     if (!message) {
         return;

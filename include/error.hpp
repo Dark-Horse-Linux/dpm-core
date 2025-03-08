@@ -32,31 +32,52 @@
 
 #include <iostream>
 
-// global errors for the core DPM routing/execution component
+/**
+ * @enum DPMErrorCategory
+ * @brief Defines error categories for the DPM system
+ *
+ * Enumeration of all possible error conditions that can occur during
+ * DPM operations, particularly related to module loading and execution.
+ */
 enum class DPMErrorCategory {
-    SUCCESS,
-    PATH_NOT_FOUND,
-    PATH_NOT_DIRECTORY,
-    PATH_TOO_LONG,
-    PERMISSION_DENIED,
-    MODULE_NOT_FOUND,
-    MODULE_NOT_LOADED,
-    MODULE_LOAD_FAILED,
-    INVALID_MODULE,
-    SYMBOL_NOT_FOUND,
-    SYMBOL_EXECUTION_FAILED,
-    UNDEFINED_ERROR
+    SUCCESS,               /**< Operation completed successfully */
+    PATH_NOT_FOUND,        /**< The specified path does not exist */
+    PATH_NOT_DIRECTORY,    /**< The specified path exists but is not a directory */
+    PATH_TOO_LONG,         /**< The specified path exceeds the system's path length limit */
+    PERMISSION_DENIED,     /**< Insufficient permissions to access the path */
+    MODULE_NOT_FOUND,      /**< The specified module was not found in the module path */
+    MODULE_NOT_LOADED,     /**< Failed to load the module (e.g., before executing it) */
+    MODULE_LOAD_FAILED,    /**< Dynamic loading of the module failed */
+    INVALID_MODULE,        /**< The module does not conform to the required interface */
+    SYMBOL_NOT_FOUND,      /**< A required symbol was not found in the loaded module */
+    SYMBOL_EXECUTION_FAILED, /**< Execution of a module function failed */
+    UNDEFINED_ERROR        /**< An undefined or unexpected error occurred */
 };
 
-// A generic context object that can hold any error-specific data
-// only DPMErrorCategory is required, all other fields are optional
+/**
+ * @struct FlexDPMError
+ * @brief Error context structure for DPM operations
+ *
+ * Provides context information for errors that occur during DPM operations.
+ * Only the error field is required; other fields can be populated as needed
+ * depending on the specific error condition.
+ */
 typedef struct {
-    DPMErrorCategory error;
-    const char * module_name;
-    const char * module_path;
-    const char * message;
+    DPMErrorCategory error;     /**< The error category (required) */
+    const char * module_name;   /**< Name of the module involved in the error (optional) */
+    const char * module_path;   /**< Path to the modules directory (optional) */
+    const char * message;       /**< Additional error message or context (optional) */
     // Add other potential fields as needed as all fields beyond error are optional
 } FlexDPMError;
 
-// shorthand for creating a FlexDPMError instance
-FlexDPMError make_error( DPMErrorCategory error_category );
+/**
+ * @brief Creates a new FlexDPMError instance with the specified error category
+ *
+ * Utility function to simplify the creation of FlexDPMError structures.
+ * Initializes a new error context with the given error category and
+ * sets all other fields to NULL.
+ *
+ * @param error_category The error category to assign to the new error context
+ * @return A FlexDPMError structure with the specified error category
+ */
+FlexDPMError make_error(DPMErrorCategory error_category);

@@ -1,80 +1,22 @@
 /**
- * @file info.cpp
- * @brief Example DPM info module implementation
+ * @file infoFuncs.cpp
+ * @brief Implementation of the info module support functions
  *
- * Implements a simple DPM module that provides information about the DPM system.
- * This module demonstrates how to implement the required module interface and
- * interact with the DPM core through configuration functions.
+ * Implements functions for the info module that provide information about
+ * the DPM system, including version, system details, and configuration.
  *
  * @copyright Copyright (c) 2025 SILO GROUP LLC
  * @author Chris Punches <chris.punches@silogroup.org>
  *
  * Part of the Dark Horse Linux Package Manager (DPM)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
- *
- * For bug reports or contributions, please contact the dhlp-contributors
- * mailing list at: https://lists.darkhorselinux.org/mailman/listinfo/dhlp-contributors
  */
 
-// Implementation of the info module
-// This module provides information about the DPM system
+#include "infoFuncs.hpp"
 
-#include <string>
-#include <cstring>
-#include <vector>
-#include <fstream>
-#include <sys/utsname.h>
 
-// Define version macros
-#define MODULE_VERSION "0.1.0"
-#define DPM_VERSION "0.1.0"
-
-// Define constants for logging levels
-// These must match.
-const int LOG_FATAL = 0;
-const int LOG_ERROR = 1;
-const int LOG_WARN  = 2;
-const int LOG_INFO  = 3;
-const int LOG_DEBUG = 4;
-
-// Declaration of the DPM config function we want to call
-extern "C" const char* dpm_get_config(const char* section, const char* key);
-
-// Declaration of the DPM log function
-extern "C" void dpm_log(int level, const char* message);
-
-// Version information
-extern "C" const char* dpm_module_get_version(void) {
-    return MODULE_VERSION;
-}
-
-// Module description
-extern "C" const char* dpm_get_description(void) {
-    return "DPM Info Module - Provides information about the DPM system";
-}
-
-// Command enum for switch case
-enum Command {
-    CMD_UNKNOWN,
-    CMD_HELP,
-    CMD_VERSION,
-    CMD_SYSTEM,
-    CMD_CONFIG
-};
-
-// Function to detect architecture using uname
+/**
+ * Function to detect architecture using uname
+ */
 std::string detect_architecture() {
     struct utsname system_info;
 
@@ -86,7 +28,9 @@ std::string detect_architecture() {
     return system_info.machine;
 }
 
-// Function to detect OS
+/**
+ * Function to detect OS details
+ */
 std::string detect_os() {
     struct utsname system_info;
 
@@ -135,7 +79,9 @@ std::string detect_os() {
     return os;
 }
 
-// Command handler functions
+/**
+ * Command handler for help command
+ */
 int cmd_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "DPM Info Module - Provides information about the DPM system");
     dpm_log(LOG_INFO, "Available commands:");
@@ -146,6 +92,9 @@ int cmd_help(int argc, char** argv) {
     return 0;
 }
 
+/**
+ * Command handler for version command
+ */
 int cmd_version(int argc, char** argv) {
     std::string version_msg = "DPM Version: ";
     version_msg += DPM_VERSION;
@@ -162,6 +111,9 @@ int cmd_version(int argc, char** argv) {
     return 0;
 }
 
+/**
+ * Command handler for system command
+ */
 int cmd_system(int argc, char** argv) {
     dpm_log(LOG_INFO, "System Information:");
 
@@ -176,6 +128,9 @@ int cmd_system(int argc, char** argv) {
     return 0;
 }
 
+/**
+ * Command handler for config command
+ */
 int cmd_config(int argc, char** argv) {
     const char* module_path = dpm_get_config("modules", "module_path");
 
@@ -188,6 +143,9 @@ int cmd_config(int argc, char** argv) {
     return 0;
 }
 
+/**
+ * Command handler for unknown commands
+ */
 int cmd_unknown(const char* command, int argc, char** argv) {
     std::string msg = "Unknown command: ";
     msg += (command ? command : "");
@@ -196,7 +154,9 @@ int cmd_unknown(const char* command, int argc, char** argv) {
     return 1;
 }
 
-// Function to parse command string to enum
+/**
+ * Function to parse command string to enum
+ */
 Command parse_command(const char* cmd_str) {
     if (cmd_str == nullptr || strlen(cmd_str) == 0) {
         return CMD_HELP;
@@ -216,29 +176,4 @@ Command parse_command(const char* cmd_str) {
     }
 
     return CMD_UNKNOWN;
-}
-
-// Main entry point that will be called by DPM
-extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
-    dpm_log(LOG_INFO, "Info module execution started");
-
-    Command cmd = parse_command(command);
-
-    switch (cmd) {
-        case CMD_VERSION:
-            return cmd_version(argc, argv);
-
-        case CMD_SYSTEM:
-            return cmd_system(argc, argv);
-
-        case CMD_CONFIG:
-            return cmd_config(argc, argv);
-
-        case CMD_HELP:
-            return cmd_help(argc, argv);
-
-        case CMD_UNKNOWN:
-        default:
-            return cmd_unknown(command, argc, argv);
-    }
 }

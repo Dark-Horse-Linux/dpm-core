@@ -41,16 +41,39 @@
 #include "dpm_interface_helpers.hpp"
 #include "Logger.hpp"
 
-/*
+/**
+ * @defgroup dpm_interface DPM Interface Methods
+ * @brief Interface methods for the DPM command-line tool
  *
- *  DPM Interface methods.  These are wrappers of DPM functionality that are meant to handle user view, turning
- *  error codes into human-presentable information, etc.  Features are defined internally, these will only ever be
- *  wrappers of existing features to provide the human/cli interface.
- *
+ * These functions provide the human-readable interface for the DPM utility,
+ * transforming error codes into user-friendly messages and implementing
+ * commands that report system information.
+ * @{
  */
 
-// check if the module path exists
+/**
+ * @brief Verifies that the module path exists and is accessible
+ *
+ * Checks if the configured module path exists, is a directory, and has
+ * the necessary read permissions. If any check fails, an appropriate
+ * error message is displayed.
+ *
+ * @param loader Reference to a ModuleLoader object that provides the module path
+ * @return 0 if the path exists and is accessible, 1 otherwise
+ */
 int main_check_module_path(const ModuleLoader& loader);
 
-// list the modules
+/**
+ * @brief Lists all available and valid DPM modules
+ *
+ * Retrieves and displays a formatted table of available DPM modules
+ * from the specified module path, including their versions and descriptions.
+ * Validates each module by checking for required symbols before including
+ * it in the list.
+ *
+ * @param loader Reference to a ModuleLoader object that provides access to modules
+ * @return 0 on success, 1 on failure
+ */
 int main_list_modules(const ModuleLoader& loader);
+
+/** @} */ // end of dpm_interface group

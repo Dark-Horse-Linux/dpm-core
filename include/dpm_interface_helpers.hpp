@@ -38,13 +38,31 @@
 #include "LoggingLevels.hpp"
 #include "DPMDefaults.hpp"
 
-// data structure for supplied arguments
+/**
+ * @struct CommandArgs
+ * @brief Structure for storing parsed command-line arguments
+ *
+ * Contains fields for all command-line arguments that can be passed to
+ * the DPM utility, providing a structured way to access them throughout
+ * the application.
+ */
 struct CommandArgs {
-    std::string module_path;
-    std::string config_dir;
-    std::string module_name;
-    std::string command;
+    std::string module_path;  /**< Path to the directory containing DPM modules */
+    std::string config_dir;   /**< Path to the directory containing configuration files */
+    std::string module_name;  /**< Name of the module to execute */
+    std::string command;      /**< Command string to pass to the module */
 };
 
-// parse dpm cli arguments into a serialized structure
-CommandArgs parse_args( int argc, char * argv[] );
+/**
+ * @brief Parses command-line arguments into a CommandArgs structure
+ *
+ * Processes the arguments provided to DPM and organizes them into a
+ * CommandArgs structure for easier access. Handles options like
+ * --module-path, --config-dir, and --help, as well as module names
+ * and module-specific arguments.
+ *
+ * @param argc Number of command-line arguments
+ * @param argv Array of C-style strings containing the arguments
+ * @return A CommandArgs structure containing the parsed arguments
+ */
+CommandArgs parse_args(int argc, char* argv[]);

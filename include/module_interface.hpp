@@ -38,13 +38,19 @@
 #include "LoggingLevels.hpp"
 #include "Logger.hpp"
 
-/*
- *  Provides reserved symbol names we look for in modules.
+/**
+ * @namespace module_interface
+ * @brief Namespace containing module interface definitions
+ *
+ * Provides reserved symbol names and interface definitions for DPM modules.
  */
-
-// Define required symbols in one place
 namespace module_interface {
-    // This is the single source of truth for required module symbols
+    /**
+     * @brief List of required symbols that every valid DPM module must export
+     *
+     * These function names must be exported by a module for the module to be
+     * considered valid and loadable by the DPM core system.
+     */
     static const std::vector<std::string> required_symbols = {
         "dpm_module_execute",
         "dpm_module_get_version",
@@ -52,20 +58,67 @@ namespace module_interface {
     };
 }
 
-// Common interface for all DPM modules
+/**
+ * @defgroup module_interface Common Interface for DPM Modules
+ * @brief Functions that modules must implement and core functions available to modules
+ * @{
+ */
 extern "C" {
-    // Module must export this symbol to be considered valid
+    /**
+     * @brief Main entry point for module execution
+     *
+     * This function must be implemented by all modules and serves as the
+     * primary execution point when the module is invoked by DPM.
+     *
+     * @param command The command string to execute
+     * @param argc Number of arguments provided
+     * @param argv Array of argument strings
+     * @return 0 on success, non-zero on failure
+     */
     int dpm_module_execute(const char* command, int argc, char** argv);
 
-    // Module version information
+    /**
+     * @brief Provides module version information
+     *
+     * Returns a string containing the module's version information.
+     * This is displayed when listing available modules.
+     *
+     * @return String containing the module's version
+     */
     const char* dpm_module_get_version(void);
 
-    // Module description information
+    /**
+     * @brief Provides module description
+     *
+     * Returns a human-readable description of the module's functionality.
+     * This is displayed when listing available modules.
+     *
+     * @return String containing the module's description
+     */
     const char* dpm_get_description(void);
 
-    // Direct configuration access function
+    /**
+     * @brief Accesses configuration values
+     *
+     * Allows modules to retrieve configuration values from the DPM
+     * configuration system. Implemented by the DPM core and available
+     * to all modules.
+     *
+     * @param section The configuration section name
+     * @param key The configuration key within the section
+     * @return The configuration value as a string, or NULL if not found
+     */
     const char* dpm_get_config(const char* section, const char* key);
 
-    // Direct logging function
+    /**
+     * @brief Logs messages through the DPM logging system
+     *
+     * Allows modules to log messages using the centralized DPM logging
+     * system. Implemented by the DPM core and available to all modules.
+     *
+     * @param level The log level as an integer (0=FATAL, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG)
+     * @param message The message to log
+     */
     void dpm_log(int level, const char* message);
 }
+/** @} */

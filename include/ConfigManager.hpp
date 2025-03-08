@@ -45,52 +45,166 @@
 
 #include "dpm_interface_helpers.hpp"
 
+/**
+ * @class ConfigManager
+ * @brief Manages and provides access to configuration settings
+ *
+ * This class handles loading, parsing, and providing access to configuration
+ * values from INI-style files. It supports sections, key-value pairs, and
+ * provides type-conversion methods for different value types.
+ */
 class ConfigManager {
     public:
-        // Constructor
+        /**
+         * @brief Constructor
+         *
+         * Initializes a new ConfigManager instance with the default
+         * configuration directory.
+         */
         ConfigManager();
 
-        // Set the configuration directory
+        /**
+         * @brief Sets the configuration directory path
+         *
+         * @param config_dir The directory path where configuration files are located
+         */
         void setConfigDir(const std::string& config_dir);
 
-        // Get the current configuration directory
+        /**
+         * @brief Gets the current configuration directory path
+         *
+         * @return The current configuration directory path
+         */
         std::string getConfigDir() const;
 
-        // Load all configuration files from the config directory
+        /**
+         * @brief Loads all configuration files from the config directory
+         *
+         * Scans the configuration directory for .conf files, parses them,
+         * and populates the internal configuration data structure.
+         *
+         * @return true if at least one configuration file was loaded successfully,
+         *         false otherwise
+         */
         bool loadConfigurations();
 
-        // Get configuration values with type conversion
+        /**
+         * @brief Gets a configuration value as a C-style string
+         *
+         * @param section The section name (uses DEFAULT_SECTION if NULL)
+         * @param key The configuration key
+         * @return The configuration value as a C-style string, or NULL if not found
+         */
         const char* getConfigValue(const char* section, const char* key) const;
+
+        /**
+         * @brief Gets a configuration value as a C++ string with default
+         *
+         * @param section The section name (uses DEFAULT_SECTION if NULL)
+         * @param key The configuration key
+         * @param defaultValue The default value to return if the key is not found
+         * @return The configuration value as a string, or defaultValue if not found
+         */
         std::string getConfigString(const char* section, const char* key, const std::string& defaultValue = "") const;
+
+        /**
+         * @brief Gets a configuration value as an integer with default
+         *
+         * @param section The section name (uses DEFAULT_SECTION if NULL)
+         * @param key The configuration key
+         * @param defaultValue The default value to return if the key is not found or conversion fails
+         * @return The configuration value as an integer, or defaultValue if not found or conversion fails
+         */
         int getConfigInt(const char* section, const char* key, int defaultValue = 0) const;
+
+        /**
+         * @brief Gets a configuration value as a double with default
+         *
+         * @param section The section name (uses DEFAULT_SECTION if NULL)
+         * @param key The configuration key
+         * @param defaultValue The default value to return if the key is not found or conversion fails
+         * @return The configuration value as a double, or defaultValue if not found or conversion fails
+         */
         double getConfigDouble(const char* section, const char* key, double defaultValue = 0.0) const;
+
+        /**
+         * @brief Gets a configuration value as a boolean with default
+         *
+         * Recognizes "true", "yes", "1", "on", "enabled" as true values and
+         * "false", "no", "0", "off", "disabled" as false values (case-insensitive).
+         *
+         * @param section The section name (uses DEFAULT_SECTION if NULL)
+         * @param key The configuration key
+         * @param defaultValue The default value to return if the key is not found or conversion fails
+         * @return The configuration value as a boolean, or defaultValue if not found or conversion fails
+         */
         bool getConfigBool(const char* section, const char* key, bool defaultValue = false) const;
 
-        // Check if configuration directory exists
+        /**
+         * @brief Checks if the configuration directory exists
+         *
+         * @return true if the configuration directory exists, false otherwise
+         */
         bool configDirExists() const;
 
-        // Check if a configuration key exists
+        /**
+         * @brief Checks if a configuration key exists
+         *
+         * @param section The section name (uses DEFAULT_SECTION if NULL)
+         * @param key The configuration key
+         * @return true if the key exists in the specified section or DEFAULT_SECTION, false otherwise
+         */
         bool hasConfigKey(const char* section, const char* key) const;
 
     private:
-        // Default section name to use when none is specified
+        /**
+         * @brief Default section name to use when none is specified
+         */
         static constexpr const char* DEFAULT_SECTION = "MAIN";
 
-        // Parse a single configuration file
+        /**
+         * @brief Parses a single configuration file
+         *
+         * @param config_file Path to the configuration file to parse
+         * @return true if the file was parsed successfully, false otherwise
+         */
         bool parseConfigFile(const std::filesystem::path& config_file);
 
-        // Trim whitespace from a string
+        /**
+         * @brief Removes leading and trailing whitespace from a string
+         *
+         * @param str The string to trim
+         * @return The trimmed string
+         */
         std::string trimWhitespace(const std::string& str) const;
 
-        // Find a key in the given section or in the default section
+        /**
+         * @brief Finds a configuration value by section and key
+         *
+         * Searches for the key in the specified section. If not found and the
+         * section is not DEFAULT_SECTION, tries to find the key in DEFAULT_SECTION.
+         *
+         * @param section The section name
+         * @param key The configuration key
+         * @return Optional reference to the configuration value if found, empty optional otherwise
+         */
         std::optional<std::reference_wrapper<const std::string>> findConfigValue(const std::string& section, const std::string& key) const;
 
-        // Configuration directory path
+        /**
+         * @brief Configuration directory path
+         */
         std::string _config_dir;
 
-        // Configuration data structure: section -> key -> value
+        /**
+         * @brief Configuration data structure: section -> key -> value
+         */
         std::map<std::string, std::map<std::string, std::string>> _config_data;
 };
 
-// Global configuration manager instance
+/**
+ * @brief Global configuration manager instance
+ *
+ * Provides a single instance of the ConfigManager that can be accessed
+ * from anywhere in the application.
+ */
 extern ConfigManager g_config_manager;

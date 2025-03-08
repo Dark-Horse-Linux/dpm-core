@@ -42,29 +42,115 @@
 #include "error.hpp"
 #include "module_interface.hpp"
 
+/**
+ * @class ModuleLoader
+ * @brief Handles dynamic loading and management of DPM modules
+ *
+ * Provides functionality for discovering, loading, validating, and executing
+ * DPM modules from shared object files. Ensures that modules conform to the
+ * required interface before allowing their execution.
+ */
 class ModuleLoader {
     public:
-        // initializer
+        /**
+         * @brief Constructor
+         *
+         * Initializes a new ModuleLoader with the specified module path.
+         *
+         * @param module_path Directory path where DPM modules are located (defaults to /usr/lib/dpm/modules/)
+         */
         explicit ModuleLoader(std::string module_path = "/usr/lib/dpm/modules/");
+
+        /**
+         * @brief Lists available modules in the module path
+         *
+         * Populates a vector with the names of available modules found in
+         * the configured module path.
+         *
+         * @param modules Vector to populate with module names
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory list_available_modules(std::vector<std::string>& modules) const;
+
+        /**
+         * @brief Gets the configured module path
+         *
+         * Retrieves the directory path where modules are located.
+         *
+         * @param path Reference to store the module path
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory get_module_path(std::string& path) const;
 
-        // Load and execute methods
+        /**
+         * @brief Loads a module by name
+         *
+         * Attempts to dynamically load a module from the configured module path.
+         *
+         * @param module_name Name of the module to load
+         * @param module_handle Reference to store the loaded module handle
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory load_module(const std::string& module_name, void*& module_handle) const;
+
+        /**
+         * @brief Executes a module with the specified command
+         *
+         * Loads a module and executes its main entry point with the given command.
+         *
+         * @param module_name Name of the module to execute
+         * @param command Command string to pass to the module
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory execute_module(const std::string& module_name, const std::string& command) const;
 
-        // Get module version
+        /**
+         * @brief Gets a module's version information
+         *
+         * Retrieves the version string from a loaded module.
+         *
+         * @param module_handle Handle to a loaded module
+         * @param version Reference to store the version string
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory get_module_version(void* module_handle, std::string& version) const;
 
-        // Get module description
+        /**
+         * @brief Gets a module's description
+         *
+         * Retrieves the description string from a loaded module.
+         *
+         * @param module_handle Handle to a loaded module
+         * @param description Reference to store the description string
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory get_module_description(void* module_handle, std::string& description) const;
 
-        // Check if all required symbols from module_interface.hpp are exported by the module
+        /**
+         * @brief Validates a module's interface
+         *
+         * Checks if a loaded module exports all required symbols as defined
+         * in the module_interface.
+         *
+         * @param module_handle Handle to a loaded module
+         * @param missing_symbols Reference to store names of any missing required symbols
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory validate_module_interface(void* module_handle, std::vector<std::string>& missing_symbols) const;
 
-        // Helper method to check module path validity
+        /**
+         * @brief Checks module path validity
+         *
+         * Verifies that the configured module path exists, is a directory,
+         * and has the necessary permissions.
+         *
+         * @return DPMErrorCategory indicating success or failure
+         */
         DPMErrorCategory check_module_path() const;
 
     private:
+        /**
+         * @brief Directory path where modules are located
+         */
         std::string _module_path;
 };

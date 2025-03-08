@@ -41,24 +41,6 @@
  *  Also includes helpers related to the CLI.
  */
 
-/**
- * Verify that the module path exists and is accessible.
- *
- * This function checks if the configured module path exists, is a directory,
- * and has the necessary read permissions.
- *
- * @param loader Reference to a ModuleLoader object that provides the module path
- *
- * @return 0 if the path exists and is accessible, 1 otherwise
- *
- * The function performs the following checks:
- * 1. Retrieves the module path from the loader
- * 2. Verifies that the path exists in the filesystem
- * 3. Confirms that the path is a directory
- * 4. Checks that the directory has read permissions
- *
- * If any check fails, an appropriate error message is displayed to stderr.
- */
 int main_check_module_path(const ModuleLoader& loader)
 {
     std::string path;
@@ -88,29 +70,7 @@ int main_check_module_path(const ModuleLoader& loader)
     return 0;
 }
 
-/**
- * List all available and valid DPM modules.
- *
- * This function retrieves and displays a formatted table of available DPM modules
- * from the specified module path, including their versions and descriptions.
- *
- * @param loader Reference to a ModuleLoader object that provides access to modules
- *
- * @return 0 on success, 1 on failure
- *
- * The function performs the following operations:
- * 1. Gets the configured module path from the loader
- * 2. Retrieves a list of all potential modules in that path
- * 3. Validates each module by checking for required symbols
- * 4. Collects version and description information from valid modules
- * 5. Formats and displays the information in a tabular format
- *
- * If no modules are found or if no valid modules are found, appropriate
- * messages are displayed.
- *
- * Modules are considered valid if they expose all required interface
- * symbols as defined in module_interface.hpp.
- */
+
 int main_list_modules(const ModuleLoader& loader)
 {
     // initialize an empty modules list

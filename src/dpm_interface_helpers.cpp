@@ -30,32 +30,6 @@
 
 #include "dpm_interface_helpers.hpp"
 
-
-
-/**
- * Parse command line arguments for DPM.
- *
- * This function parses the command line arguments provided to DPM
- * and builds a CommandArgs structure containing the parsed values.
- *
- * @param argc The number of arguments provided to the program
- * @param argv Array of C-style strings containing the arguments
- *
- * @return CommandArgs structure containing the parsed command line arguments
- *
- * The function handles the following arguments:
- * - ``-m, --module-path PATH``: Sets the directory path where DPM modules are located
- * - ``-c, --config-dir PATH``: Sets the directory path where DPM configuration files are located
- * - ``-h, --help``: Displays a help message and exits
- *
- * Additional arguments are processed as follows:
- * - First non-option argument is treated as the module name
- * - All remaining arguments are combined into a single command string for the module
- *
- * If the argument contains spaces, it will be quoted in the command string.
- *
- * If no module name is provided, the module_name field will be empty.
- */
 CommandArgs parse_args(int argc, char* argv[])
 {
     CommandArgs args;
