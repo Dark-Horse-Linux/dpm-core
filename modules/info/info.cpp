@@ -37,7 +37,6 @@
 #include <fstream>
 #include <sys/utsname.h>
 
-#include "dpmdk/include/CommonModuleAPI.hpp"
 #include "include/infoFuncs.hpp"
 
 /**

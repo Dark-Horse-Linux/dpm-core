@@ -76,4 +76,14 @@ int main_check_module_path(const ModuleLoader& loader);
  */
 int main_list_modules(const ModuleLoader& loader);
 
+/**
+ * @brief Displays usage information for DPM
+ *
+ * Shows a help message describing the available command-line options
+ * and general usage information for the DPM utility.
+ *
+ * @return 0 on success
+ */
+int main_show_help();
+
 /** @} */ // end of dpm_interface group

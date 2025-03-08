@@ -17,7 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <sys/utsname.h>
-#include "dpmdk/include/CommonModuleAPI.hpp"
+#include <dpmdk/include/CommonModuleAPI.hpp>
 
 /**
  * @enum Command

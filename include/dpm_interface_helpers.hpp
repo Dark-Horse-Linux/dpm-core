@@ -1,5 +1,5 @@
 /**
-* @file dpm_interface_helpers.hpp
+ * @file dpm_interface_helpers.hpp
  * @brief Helper functions for DPM command-line interface
  *
  * Provides utility functions for command-line argument parsing and
@@ -51,6 +51,8 @@ struct CommandArgs {
     std::string config_dir;   /**< Path to the directory containing configuration files */
     std::string module_name;  /**< Name of the module to execute */
     std::string command;      /**< Command string to pass to the module */
+    bool list_modules;        /**< Flag to indicate if modules should be listed */
+    bool show_help;           /**< Flag to indicate if help message should be shown */
 };
 
 /**
@@ -58,7 +60,7 @@ struct CommandArgs {
  *
  * Processes the arguments provided to DPM and organizes them into a
  * CommandArgs structure for easier access. Handles options like
- * --module-path, --config-dir, and --help, as well as module names
+ * --module-path, --config-dir, --list-modules, and --help, as well as module names
  * and module-specific arguments.
  *
  * @param argc Number of command-line arguments

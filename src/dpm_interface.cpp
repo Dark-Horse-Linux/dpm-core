@@ -167,3 +167,22 @@ int main_list_modules(const ModuleLoader& loader)
 
     return 0;
 }
+
+/**
+ * @brief Displays usage information for DPM
+ *
+ * Shows a help message describing the available command-line options
+ * and general usage information for the DPM utility.
+ *
+ * @return 0 on success
+ */
+int main_show_help() {
+    std::cout << "Usage: dpm [options] [module-name] [module args...] [module-command] [command-args]\n\n"
+              << "Options:\n\n"
+              << "  -m, --module-path PATH   Path to DPM modules (overrides modules.modules_path in config)\n"
+              << "  -c, --config-dir PATH    Path to DPM configuration directory\n"
+              << "  -l, --list-modules       List available modules\n"
+              << "  -h, --help               Show this help message\n\n"
+              << "For module-specific help, use: dpm <module-name> help\n\n";
+    return 0;
+}

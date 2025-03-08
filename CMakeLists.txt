@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 # Create modules directory
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
 
+# Main DPM executable
 add_executable(
         dpm
         src/dpm.cpp
@@ -19,19 +20,20 @@ add_executable(
         src/Logger.cpp
 )
 
+# Include directories for the main executable
 target_include_directories(dpm PRIVATE include)
 target_link_libraries(dpm dl)
 
 # Export symbols for dynamic loading
 target_link_options(dpm PRIVATE -rdynamic)
 
-# Add the info module with specific source files
+# Add the info module
 add_library(info MODULE
         modules/info/info.cpp
         modules/info/src/infoFuncs.cpp
-        # DO NOT include dpmdk sources which have different include requirements
 )
 
+# Set module properties
 set_target_properties(
         info PROPERTIES
         PREFIX ""
@@ -39,11 +41,12 @@ set_target_properties(
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"
 )
 
-# Add include directories for the info module
+# Include directories for the info module
 target_include_directories(info PRIVATE
         include
+        ${CMAKE_SOURCE_DIR}  # Add the project root directory to search path
         modules/info
-        modules/info/include  # Add this to find infoFuncs.hpp
+        modules/info/include
 )
 
 # Installation rules
@@ -56,7 +59,7 @@ install(
         PATTERN "*.conf"
 )
 
-# Install all .so files from build/modules to the module path
+# Install modules
 install(
         DIRECTORY ${CMAKE_BINARY_DIR}/modules/
         DESTINATION /usr/lib/dpm/modules

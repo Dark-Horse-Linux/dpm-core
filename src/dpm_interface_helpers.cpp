@@ -35,31 +35,33 @@ CommandArgs parse_args(int argc, char* argv[])
     CommandArgs args;
     args.module_path = "";
     args.config_dir = "";
+    args.list_modules = false;
+    args.show_help = false;
 
     static struct option long_options[] = {
         {"module-path", required_argument, 0, 'm'},
         {"config-dir", required_argument, 0, 'c'},
+        {"list-modules", no_argument, 0, 'l'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
     int opt;
     int option_index = 0;
-    while ((opt = getopt_long(argc, argv, "m:c:h", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "m:c:lh", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'm':
                 args.module_path = optarg;
-                break;
+            break;
             case 'c':
                 args.config_dir = optarg;
-                break;
+            break;
+            case 'l':
+                args.list_modules = true;
+            break;
             case 'h':
-                std::cout << "Usage: dpm [options] [module-name] [module args...] [module-command] [command-args]\n\n"
-                          << "Options:\n\n"
-                          << "  -m, --module-path PATH   Path to DPM modules (overrides modules.modules_path in config)\n"
-                          << "  -c, --config-dir PATH    Path to DPM configuration directory\n"
-                          << "  -h, --help               Show this help message\n\n";
-                exit(0);
+                args.show_help = true;
+            break;
             case '?':
                 exit(1);
         }

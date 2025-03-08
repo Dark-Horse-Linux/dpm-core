@@ -48,8 +48,9 @@
 // the default behaviour if dpm is executed without being told to do anything
 int default_behavior(const ModuleLoader& loader)
 {
-    return main_list_modules(loader);
+    return main_show_help();
 }
+
 
 /**
  * @brief Entry point for the DPM utility
@@ -131,21 +132,30 @@ int main( int argc, char* argv[] )
         return path_check_result;
     }
 
+    // If help is requested, show it and exit
+    if (args.show_help) {
+        return main_show_help();
+    }
+
+    // If list modules is requested, show the list and exit
+    if (args.list_modules) {
+        return main_list_modules(loader);
+    }
+
     // if no module is provided to execute, then trigger the default
-    // dpm behaviour
-    if ( args.module_name.empty() )
-    {
-        return default_behavior( loader );
+    // behaviour (show help)
+    if (args.module_name.empty()) {
+        return default_behavior(loader);
     }
 
     // execute the module
-    DPMErrorCategory execute_error = loader.execute_module( args.module_name, args.command );
+    DPMErrorCategory execute_error = loader.execute_module(args.module_name, args.command);
 
     std::string absolute_modules_path;
-    loader.get_module_path( absolute_modules_path );
+    loader.get_module_path(absolute_modules_path);
 
     // construct an error object
-    FlexDPMError result = make_error( execute_error );
+    FlexDPMError result = make_error(execute_error);
     result.module_name = args.module_name.c_str();
     result.module_path = absolute_modules_path.c_str();
 
