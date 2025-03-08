@@ -1,4 +1,3 @@
-// Logger.hpp
 #pragma once
 
 #include <fstream>
@@ -30,6 +29,9 @@ public:
 
     // String to LoggingLevels conversion
     static LoggingLevels stringToLogLevel(const std::string& level_str, LoggingLevels default_level = LoggingLevels::INFO);
+
+    // Convert LoggingLevels enum to string
+    static std::string LogLevelToString(LoggingLevels level);
 
 private:
     // the logging level to stay initialized to

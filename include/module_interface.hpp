@@ -35,7 +35,8 @@
 #include <iostream>
 
 #include "ConfigManager.hpp"
-
+#include "LoggingLevels.hpp"
+#include "Logger.hpp"
 
 /*
  *  Provides reserved symbol names we look for in modules.
@@ -62,9 +63,9 @@ extern "C" {
     // Module description information
     const char* dpm_get_description(void);
 
-    // Callback function exposed by DPM core for modules to use
-    int dpm_core_callback(const char* action, const char* data);
-
     // Direct configuration access function
     const char* dpm_get_config(const char* section, const char* key);
+
+    // Direct logging function
+    void dpm_log(int level, const char* message);
 }

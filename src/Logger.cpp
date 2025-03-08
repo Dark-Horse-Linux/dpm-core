@@ -4,8 +4,8 @@
 // Global logger instance
 Logger g_logger;
 
-Logger::Logger() 
-    : log_level(DPMDefaults::LOG_LEVEL), 
+Logger::Logger()
+    : log_level(DPMDefaults::LOG_LEVEL),
       log_to_file(DPMDefaults::write_to_log),
       log_file(DPMDefaults::LOG_FILE)
 {
@@ -18,7 +18,7 @@ Logger::~Logger()
 void Logger::setLogFile(const std::string& new_log_file)
 {
     log_file = new_log_file;
-    
+
     // If logging to file is enabled, ensure the log directory exists and is writable
     if (log_to_file) {
         std::filesystem::path log_path(log_file);
@@ -55,7 +55,7 @@ void Logger::setLogFile(const std::string& new_log_file)
 void Logger::setWriteToLog(bool new_write_to_log)
 {
     log_to_file = new_write_to_log;
-    
+
     // If logging was just enabled, validate the log file
     if (log_to_file) {
         setLogFile(log_file);
@@ -65,6 +65,24 @@ void Logger::setWriteToLog(bool new_write_to_log)
 void Logger::setLogLevel(LoggingLevels new_log_level)
 {
     log_level = new_log_level;
+}
+
+std::string Logger::LogLevelToString(LoggingLevels level)
+{
+    switch (level) {
+        case LoggingLevels::FATAL:
+            return "FATAL";
+        case LoggingLevels::ERROR:
+            return "ERROR";
+        case LoggingLevels::WARN:
+            return "WARN";
+        case LoggingLevels::INFO:
+            return "INFO";
+        case LoggingLevels::DEBUG:
+            return "DEBUG";
+        default:
+            return "UNKNOWN";
+    }
 }
 
 LoggingLevels Logger::stringToLogLevel(const std::string& level_str, LoggingLevels default_level)
@@ -80,7 +98,7 @@ LoggingLevels Logger::stringToLogLevel(const std::string& level_str, LoggingLeve
     } else if (level_str == "DEBUG") {
         return LoggingLevels::DEBUG;
     }
-    
+
     // Return default if no match
     return default_level;
 }
@@ -90,27 +108,7 @@ void Logger::log(LoggingLevels message_level, const std::string& message)
     // Only process if the message level is less than or equal to the configured level
     if (message_level <= log_level) {
         // Convert log level to string
-        std::string level_str;
-        switch (message_level) {
-            case LoggingLevels::FATAL:
-                level_str = "FATAL";
-                break;
-            case LoggingLevels::ERROR:
-                level_str = "ERROR";
-                break;
-            case LoggingLevels::WARN:
-                level_str = "WARN";
-                break;
-            case LoggingLevels::INFO:
-                level_str = "INFO";
-                break;
-            case LoggingLevels::DEBUG:
-                level_str = "DEBUG";
-                break;
-            default:
-                level_str = "UNKNOWN";
-                break;
-        }
+        std::string level_str = LogLevelToString(message_level);
 
         // Console output without timestamp
         if (message_level == LoggingLevels::FATAL ||

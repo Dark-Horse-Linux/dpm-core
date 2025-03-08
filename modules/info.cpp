@@ -28,7 +28,9 @@
  * mailing list at: https://lists.darkhorselinux.org/mailman/listinfo/dhlp-contributors
  */
 
-#include <iostream>
+// Implementation of the info module
+// This module provides information about the DPM system
+
 #include <string>
 #include <cstring>
 #include <vector>
@@ -39,12 +41,19 @@
 #define MODULE_VERSION "0.1.0"
 #define DPM_VERSION "0.1.0"
 
+// Define constants for logging levels
+// These must match.
+const int LOG_FATAL = 0;
+const int LOG_ERROR = 1;
+const int LOG_WARN  = 2;
+const int LOG_INFO  = 3;
+const int LOG_DEBUG = 4;
 
 // Declaration of the DPM config function we want to call
 extern "C" const char* dpm_get_config(const char* section, const char* key);
 
-// Implementation of the info module
-// This module provides information about the DPM system
+// Declaration of the DPM log function
+extern "C" void dpm_log(int level, const char* message);
 
 // Version information
 extern "C" const char* dpm_module_get_version(void) {
@@ -70,6 +79,7 @@ std::string detect_architecture() {
     struct utsname system_info;
 
     if (uname(&system_info) == -1) {
+        dpm_log(LOG_ERROR, "Failed to detect system architecture");
         return "Unknown";
     }
 
@@ -81,6 +91,7 @@ std::string detect_os() {
     struct utsname system_info;
 
     if (uname(&system_info) == -1) {
+        dpm_log(LOG_ERROR, "Failed to detect operating system");
         return "Unknown";
     }
 
@@ -126,39 +137,62 @@ std::string detect_os() {
 
 // Command handler functions
 int cmd_help(int argc, char** argv) {
-    std::cout << "DPM Info Module - Provides information about the DPM system\n\n";
-    std::cout << "Available commands:\n\n";
-    std::cout << "  version    - Display DPM version information\n";
-    std::cout << "  system     - Display system information\n";
-    std::cout << "  config     - Display configuration information\n";
-    std::cout << "  help       - Display this help message\n";
+    dpm_log(LOG_INFO, "DPM Info Module - Provides information about the DPM system");
+    dpm_log(LOG_INFO, "Available commands:");
+    dpm_log(LOG_INFO, "  version    - Display DPM version information");
+    dpm_log(LOG_INFO, "  system     - Display system information");
+    dpm_log(LOG_INFO, "  config     - Display configuration information");
+    dpm_log(LOG_INFO, "  help       - Display this help message");
     return 0;
 }
 
 int cmd_version(int argc, char** argv) {
-    std::cout << "DPM Version: " << DPM_VERSION << "\n";
-    std::cout << "Build Date: " << __DATE__ << "\n";
-    std::cout << "Build Time: " << __TIME__ << "\n";
+    std::string version_msg = "DPM Version: ";
+    version_msg += DPM_VERSION;
+    dpm_log(LOG_INFO, version_msg.c_str());
+
+    std::string date_msg = "Build Date: ";
+    date_msg += __DATE__;
+    dpm_log(LOG_INFO, date_msg.c_str());
+
+    std::string time_msg = "Build Time: ";
+    time_msg += __TIME__;
+    dpm_log(LOG_INFO, time_msg.c_str());
+
     return 0;
 }
 
 int cmd_system(int argc, char** argv) {
-    std::cout << "System Information:\n";
-    std::cout << "  OS: " << detect_os() << "\n";
-    std::cout << "  Architecture: " << detect_architecture() << "\n";
+    dpm_log(LOG_INFO, "System Information:");
+
+    std::string os_msg = "  OS: ";
+    os_msg += detect_os();
+    dpm_log(LOG_INFO, os_msg.c_str());
+
+    std::string arch_msg = "  Architecture: ";
+    arch_msg += detect_architecture();
+    dpm_log(LOG_INFO, arch_msg.c_str());
+
     return 0;
 }
 
 int cmd_config(int argc, char** argv) {
     const char* module_path = dpm_get_config("modules", "module_path");
-    std::cout << "Configuration Information:\n";
-    std::cout << "  Module Path: " << (module_path ? module_path : "Not configured") << "\n";
+
+    dpm_log(LOG_INFO, "Configuration Information:");
+
+    std::string path_msg = "  Module Path: ";
+    path_msg += (module_path ? module_path : "Not configured");
+    dpm_log(LOG_INFO, path_msg.c_str());
+
     return 0;
 }
 
 int cmd_unknown(const char* command, int argc, char** argv) {
-    std::cerr << "Unknown command: " << (command ? command : "") << "\n";
-    std::cerr << "Run 'dpm info help' for a list of available commands\n";
+    std::string msg = "Unknown command: ";
+    msg += (command ? command : "");
+    dpm_log(LOG_WARN, msg.c_str());
+    dpm_log(LOG_WARN, "Run 'dpm info help' for a list of available commands");
     return 1;
 }
 
@@ -186,6 +220,8 @@ Command parse_command(const char* cmd_str) {
 
 // Main entry point that will be called by DPM
 extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
+    dpm_log(LOG_INFO, "Info module execution started");
+
     Command cmd = parse_command(command);
 
     switch (cmd) {
