@@ -149,16 +149,5 @@ int main( int argc, char* argv[] )
     }
 
     // execute the module
-    DPMErrorCategory execute_error = loader.execute_module(args.module_name, args.command);
-
-    std::string absolute_modules_path;
-    loader.get_module_path(absolute_modules_path);
-
-    // construct an error object
-    FlexDPMError result = make_error(execute_error);
-    result.module_name = args.module_name.c_str();
-    result.module_path = absolute_modules_path.c_str();
-
-    // pair result with a message and exit with the appropriate error code
-    return handle_error(result);
+    int return_code = main_execute_module( loader, args.module_name, args.command );
 }

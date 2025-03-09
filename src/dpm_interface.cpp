@@ -30,6 +30,8 @@
 
 #include "dpm_interface.hpp"
 
+#include <handlers.hpp>
+
 /*
  *  DPM Interface methods.
  *
@@ -185,4 +187,23 @@ int main_show_help() {
               << "  -h, --help               Show this help message\n\n"
               << "For module-specific help, use: dpm <module-name> help\n\n";
     return 0;
+}
+
+int main_execute_module( const ModuleLoader& loader, std::string module_name, std::string command ) {
+    DPMErrorCategory execute_error = loader.execute_module(module_name, command);
+    if (execute_error != DPMErrorCategory::SUCCESS) {
+        // get the absolute module path
+        std::string absolute_module_path = "";
+        loader.get_module_path(absolute_module_path);
+
+        // construct an error object
+        FlexDPMError result = make_error( execute_error );
+        result.module_name = module_name.c_str();
+        result.module_path = absolute_module_path.c_str();
+
+        // pair result with a message and return with the appropriate error code
+        return handle_error(result);
+    } else {
+        return 0;
+    }
 }
