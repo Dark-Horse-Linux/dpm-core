@@ -150,4 +150,6 @@ int main( int argc, char* argv[] )
 
     // execute the module
     int return_code = main_execute_module( loader, args.module_name, args.command );
+
+    return return_code;
 }
