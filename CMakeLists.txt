@@ -27,27 +27,11 @@ target_link_libraries(dpm dl)
 # Export symbols for dynamic loading
 target_link_options(dpm PRIVATE -rdynamic)
 
-# Add the info module
-add_library(info MODULE
-        modules/info/info.cpp
-        modules/info/src/infoFuncs.cpp
-)
+# Add the info module by including its CMakeLists.txt
+add_subdirectory(modules/info)
 
-# Set module properties
-set_target_properties(
-        info PROPERTIES
-        PREFIX ""
-        SUFFIX ".so"
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"
-)
-
-# Include directories for the info module
-target_include_directories(info PRIVATE
-        include
-        ${CMAKE_SOURCE_DIR}  # Add the project root directory to search path
-        modules/info
-        modules/info/include
-)
+# Create a custom target for building all modules
+add_custom_target(modules DEPENDS info)
 
 # Installation rules
 install(TARGETS dpm DESTINATION bin)

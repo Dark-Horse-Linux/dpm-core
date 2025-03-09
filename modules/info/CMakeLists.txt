@@ -1,34 +1,36 @@
 cmake_minimum_required(VERSION 3.22)
-project(dpm-info-module VERSION 0.1.0)
+project(info_module)
 
-# Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Set output directory for standalone builds
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(MODULE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/modules")
+    set(DPM_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+else()
+    set(MODULE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/modules")
+    set(DPM_ROOT_DIR "${CMAKE_SOURCE_DIR}")
+endif()
 
 # Create output directory
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
+file(MAKE_DIRECTORY ${MODULE_OUTPUT_DIR})
 
-# Create shared library with the correct naming convention (no prefix)
+# Create shared library
 add_library(info MODULE
         info.cpp
         src/infoFuncs.cpp
 )
 
-# Set output properties for the module
+# Set output properties
 set_target_properties(
         info PROPERTIES
         PREFIX ""
         SUFFIX ".so"
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/modules"
+        LIBRARY_OUTPUT_DIRECTORY "${MODULE_OUTPUT_DIR}"
 )
 
-# Include directories based on the actual project structure
+# Include directories
 target_include_directories(info PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/../../dpmdk/include  # Path to DPMDK headers outside the module directory
-)
-
-# Installation rules
-install(TARGETS info
-        LIBRARY DESTINATION /usr/lib/dpm/modules
+        ${DPM_ROOT_DIR}
 )
