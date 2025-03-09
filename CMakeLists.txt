@@ -3,8 +3,10 @@ project(dpm)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Create modules directory
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/modules)
+# Set binary output directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/modules)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Main DPM executable
 add_executable(
@@ -28,10 +30,13 @@ target_link_libraries(dpm dl)
 target_link_options(dpm PRIVATE -rdynamic)
 
 # Add the info module by including its CMakeLists.txt
-add_subdirectory(modules/info)
+add_subdirectory(modules/info ${CMAKE_BINARY_DIR}/build-modules/info)
+
+# add the build module by including that
+add_subdirectory(modules/build ${CMAKE_BINARY_DIR}/build-modules/build)
 
 # Create a custom target for building all modules
-add_custom_target(modules DEPENDS info)
+add_custom_target(modules DEPENDS info build)
 
 # Installation rules
 install(TARGETS dpm DESTINATION bin)
@@ -45,7 +50,7 @@ install(
 
 # Install modules
 install(
-        DIRECTORY ${CMAKE_BINARY_DIR}/modules/
+        DIRECTORY ${CMAKE_BINARY_DIR}/bin/modules/
         DESTINATION /usr/lib/dpm/modules
         FILES_MATCHING PATTERN "*.so"
 )

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(info_module)
+project(build_module)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -10,42 +10,48 @@ else()
     set(DPM_ROOT_DIR "${CMAKE_SOURCE_DIR}")
 endif()
 
-# Create shared library
-add_library(info MODULE
-        info.cpp
-        src/infoFuncs.cpp
+# Module version - used by DPM
+add_library(build MODULE
+        build.cpp
+        src/buildFuncs.cpp
 )
 
 # Set output properties
 set_target_properties(
-        info PROPERTIES
+        build PROPERTIES
         PREFIX ""
         SUFFIX ".so"
 )
 
 # Include directories
-target_include_directories(info PRIVATE
+target_include_directories(build PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${DPM_ROOT_DIR}
 )
 
+# Link with filesystem library
+target_link_libraries(build stdc++fs)
+
 # Standalone version - used for debugging
-add_executable(info_standalone
-        info.cpp
-        src/infoFuncs.cpp
+add_executable(build_standalone
+        build.cpp
+        src/buildFuncs.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build
-target_compile_definitions(info_standalone PRIVATE BUILD_STANDALONE)
+target_compile_definitions(build_standalone PRIVATE BUILD_STANDALONE)
 
 # Include directories for standalone
-target_include_directories(info_standalone PRIVATE
+target_include_directories(build_standalone PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${DPM_ROOT_DIR}
 )
 
+# Link with filesystem library for standalone
+target_link_libraries(build_standalone stdc++fs)
+
 # Set the output name for the standalone executable
 set_target_properties(
-        info_standalone PROPERTIES
-        OUTPUT_NAME "info_debug"
+        build_standalone PROPERTIES
+        OUTPUT_NAME "build_debug"
 )

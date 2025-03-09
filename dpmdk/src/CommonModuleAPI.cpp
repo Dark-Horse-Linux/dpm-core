@@ -29,9 +29,4 @@
  * mailing list at: https://lists.darkhorselinux.org/mailman/listinfo/dhlp-contributors
  */
 
-#include "module.hpp"
-
-/**
- * @note The implementation of dpm_get_config and dpm_log are provided by the DPM core.
- * Each module must implement dpm_module_execute, dpm_module_get_version, and dpm_get_description.
- */
+#include "CommonModuleAPI.hpp"

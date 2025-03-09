@@ -1,10 +1,9 @@
 /**
- * @file info.cpp
- * @brief Example DPM info module implementation
+ * @file build.cpp
+ * @brief DPM build module implementation
  *
- * Implements a simple DPM module that provides information about the DPM system.
- * This module demonstrates how to implement the required module interface and
- * interact with the DPM core through configuration functions.
+ * Implements a DPM module that creates DPM packages according to specification.
+ * This module handles the package creation process.
  *
  * @copyright Copyright (c) 2025 SILO GROUP LLC
  * @author Chris Punches <chris.punches@silogroup.org>
@@ -28,20 +27,16 @@
  * mailing list at: https://lists.darkhorselinux.org/mailman/listinfo/dhlp-contributors
  */
 
-// Implementation of the info module
-// This module provides information about the DPM system
-
 #include <string>
 #include <cstring>
 #include <vector>
-#include <fstream>
-#include <sys/utsname.h>
+#include <iostream>
 
-#include "include/infoFuncs.hpp"
+#include "include/buildFuncs.hpp"
 
 /**
  * @def MODULE_VERSION
- * @brief Version information for the info module
+ * @brief Version information for the build module
  *
  * Defines the version string that will be returned by dpm_module_get_version()
  */
@@ -51,7 +46,7 @@
  * @brief Returns the module version string
  *
  * Required implementation of the DPM module interface that provides
- * version information for the info module.
+ * version information for the build module.
  *
  * @return Const char pointer to the module version string
  */
@@ -63,18 +58,16 @@ extern "C" const char* dpm_module_get_version(void) {
  * @brief Returns the module description string
  *
  * Required implementation of the DPM module interface that provides
- * a human-readable description of the info module and its functionality.
+ * a human-readable description of the build module and its functionality.
  *
  * @return Const char pointer to the module description string
  */
 extern "C" const char* dpm_get_description(void) {
-    return "DPM Info Module - Provides information about the DPM system";
+    return "DPM Build Module - Creates DPM packages according to specification";
 }
 
-
-
 /**
- * @brief Main entry point for the info module
+ * @brief Main entry point for the build module
  *
  * Required implementation of the DPM module interface that serves as the
  * primary execution point for the module. Parses the command and routes
@@ -86,19 +79,13 @@ extern "C" const char* dpm_get_description(void) {
  * @return 0 on success, non-zero on failure
  */
 extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
-    dpm_log(LOG_INFO, "Info module execution started");
-
+    // Parse the command
     Command cmd = parse_command(command);
 
+    // Route to the appropriate command handler
     switch (cmd) {
-        case CMD_VERSION:
-            return cmd_version(argc, argv);
-
-        case CMD_SYSTEM:
-            return cmd_system(argc, argv);
-
-        case CMD_CONFIG:
-            return cmd_config(argc, argv);
+        case CMD_CREATE:
+            return cmd_create(argc, argv);
 
         case CMD_HELP:
             return cmd_help(argc, argv);

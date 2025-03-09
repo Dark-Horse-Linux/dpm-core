@@ -29,6 +29,9 @@
 
 #pragma once
 
+#include <iostream>
+#include <string>
+
 /**
  * @brief Fatal log level constant
  *
@@ -135,3 +138,52 @@ extern "C" {
  * Defines the version string for the DPM core system.
  */
 #define DPM_VERSION "0.1.0"
+
+// If we're building in standalone mode, add support for standalone execution
+#ifdef BUILD_STANDALONE
+
+// Declare, but don't define the standalone implementations
+// These will be defined in the main file through the DPM_STANDALONE_IMPL macro
+
+/**
+ * @brief Helper macro to create a standalone main function for modules
+ *
+ * This macro defines a main() function that initializes the module and
+ * processes command-line arguments to execute commands directly.
+ */
+#define DPM_MODULE_STANDALONE_MAIN() \
+extern "C" void dpm_log(int level, const char* message) { \
+    const char* level_str; \
+    switch (level) { \
+        case 0: level_str = "FATAL"; break; \
+        case 1: level_str = "ERROR"; break; \
+        case 2: level_str = "WARN"; break; \
+        case 3: level_str = "INFO"; break; \
+        case 4: level_str = "DEBUG"; break; \
+        default: level_str = "UNKNOWN"; break; \
+    } \
+    std::cout << "[" << level_str << "] " << message << std::endl; \
+} \
+extern "C" const char* dpm_get_config(const char* section, const char* key) { \
+    return nullptr; \
+} \
+int main(int argc, char** argv) { \
+    std::cout << "Module version: " << dpm_module_get_version() << std::endl; \
+    std::cout << "Description: " << dpm_get_description() << std::endl; \
+    \
+    /* Default to "help" if no command is provided */ \
+    const char* command = "help"; \
+    \
+    /* If arguments are provided, use the first as command */ \
+    if (argc > 1) { \
+        command = argv[1]; \
+        /* Shift the argument array for the command handler */ \
+        argv++; \
+        argc--; \
+    } \
+    \
+    std::cout << "Executing command: " << command << std::endl; \
+    return dpm_module_execute(command, argc - 1, argv + 1); \
+}
+
+#endif // BUILD_STANDALONE
