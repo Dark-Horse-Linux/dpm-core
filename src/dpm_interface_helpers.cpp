@@ -46,31 +46,67 @@ CommandArgs parse_args(int argc, char* argv[])
         {0, 0, 0, 0}
     };
 
-    int opt;
-    int option_index = 0;
-    while ((opt = getopt_long(argc, argv, "m:c:lh", long_options, &option_index)) != -1) {
-        switch (opt) {
-            case 'm':
-                args.module_path = optarg;
-            break;
-            case 'c':
-                args.config_dir = optarg;
-            break;
-            case 'l':
-                args.list_modules = true;
-            break;
-            case 'h':
-                args.show_help = true;
-            break;
-            case '?':
-                exit(1);
+    // Reset getopt
+    optind = 1;
+    opterr = 1; // Enable getopt error messages
+
+    // Store original argc/argv to restore later
+    int orig_argc = argc;
+    char** orig_argv = argv;
+
+    // Find the first non-option argument which should be the module name
+    int module_pos = 1;
+    while (module_pos < argc && argv[module_pos][0] == '-') {
+        // Skip option and its value if it takes an argument
+        if (argv[module_pos][1] == 'm' || argv[module_pos][1] == 'c' ||
+            (strlen(argv[module_pos]) > 2 &&
+             (strcmp(&argv[module_pos][1], "-module-path") == 0 ||
+              strcmp(&argv[module_pos][1], "-config-dir") == 0))) {
+            module_pos += 2;
+        } else {
+            module_pos++;
         }
     }
 
-    if (optind < argc) {
-        args.module_name = argv[optind++];
+    // Temporarily set argc to only include global options up to the module name
+    int temp_argc = module_pos;
 
-        for (int i = optind; i < argc; i++) {
+    int opt;
+    int option_index = 0;
+
+    // Parse only the global DPM options
+    while ((opt = getopt_long(temp_argc, argv, "m:c:lh", long_options, &option_index)) != -1) {
+        switch (opt) {
+            case 'm':
+                args.module_path = optarg;
+                break;
+            case 'c':
+                args.config_dir = optarg;
+                break;
+            case 'l':
+                args.list_modules = true;
+                break;
+            case 'h':
+                args.show_help = true;
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Reset getopt for future calls
+    optind = 1;
+
+    // Restore original argc/argv
+    argc = orig_argc;
+    argv = orig_argv;
+
+    // If we have a module name
+    if (module_pos < argc) {
+        args.module_name = argv[module_pos];
+
+        // All arguments after module name go into the command string
+        for (int i = module_pos + 1; i < argc; i++) {
             if (!args.command.empty()) {
                 args.command += " ";
             }

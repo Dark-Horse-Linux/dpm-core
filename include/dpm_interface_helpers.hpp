@@ -33,6 +33,7 @@
 #include <string>
 #include <iostream>
 #include <getopt.h>
+#include <cstring>
 
 #include "Logger.hpp"
 #include "LoggingLevels.hpp"
