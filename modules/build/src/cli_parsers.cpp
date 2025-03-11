@@ -135,7 +135,11 @@ Command parse_command(const char* cmd_str) {
         return CMD_HELP;
     }
 
-    if (strcmp(cmd_str, "help") == 0) {
+    // Check if cmd_str is a help option
+    if (strcmp(cmd_str, "-h") == 0 || strcmp(cmd_str, "--help") == 0) {
+        return CMD_HELP;
+    }
+    else if (strcmp(cmd_str, "help") == 0) {
         return CMD_HELP;
     }
     else if (strcmp(cmd_str, "create") == 0) {

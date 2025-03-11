@@ -46,77 +46,52 @@ CommandArgs parse_args(int argc, char* argv[])
         {0, 0, 0, 0}
     };
 
-    // Reset getopt
-    optind = 1;
-    opterr = 1; // Enable getopt error messages
+    // Find first non-option argument (module name)
+    int i;
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] != '-') {
+            break;
+        }
 
-    // Store original argc/argv to restore later
-    int orig_argc = argc;
-    char** orig_argv = argv;
-
-    // Find the first non-option argument which should be the module name
-    int module_pos = 1;
-    while (module_pos < argc && argv[module_pos][0] == '-') {
-        // Skip option and its value if it takes an argument
-        if (argv[module_pos][1] == 'm' || argv[module_pos][1] == 'c' ||
-            (strlen(argv[module_pos]) > 2 &&
-             (strcmp(&argv[module_pos][1], "-module-path") == 0 ||
-              strcmp(&argv[module_pos][1], "-config-dir") == 0))) {
-            module_pos += 2;
-        } else {
-            module_pos++;
+        // Handle option with argument
+        if ((strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--module-path") == 0) &&
+            i + 1 < argc) {
+            args.module_path = argv[i + 1];
+            i++;  // Skip the argument value
+        }
+        else if ((strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--config-dir") == 0) &&
+                 i + 1 < argc) {
+            args.config_dir = argv[i + 1];
+            i++;  // Skip the argument value
+        }
+        else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list-modules") == 0) {
+            args.list_modules = true;
+        }
+        else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            args.show_help = true;
         }
     }
 
-    // Temporarily set argc to only include global options up to the module name
-    int temp_argc = module_pos;
+    // If we found a module name
+    if (i < argc) {
+        // Set module name
+        args.module_name = argv[i];
 
-    int opt;
-    int option_index = 0;
-
-    // Parse only the global DPM options
-    while ((opt = getopt_long(temp_argc, argv, "m:c:lh", long_options, &option_index)) != -1) {
-        switch (opt) {
-            case 'm':
-                args.module_path = optarg;
-                break;
-            case 'c':
-                args.config_dir = optarg;
-                break;
-            case 'l':
-                args.list_modules = true;
-                break;
-            case 'h':
-                args.show_help = true;
-                break;
-            default:
-                break;
-        }
-    }
-
-    // Reset getopt for future calls
-    optind = 1;
-
-    // Restore original argc/argv
-    argc = orig_argc;
-    argv = orig_argv;
-
-    // If we have a module name
-    if (module_pos < argc) {
-        args.module_name = argv[module_pos];
-
-        // All arguments after module name go into the command string
-        for (int i = module_pos + 1; i < argc; i++) {
+        // Build command string from remaining arguments
+        i++;  // Move to first argument after module name
+        while (i < argc) {
             if (!args.command.empty()) {
                 args.command += " ";
             }
 
             std::string arg = argv[i];
+            // Quote arguments with spaces
             if (arg.find(' ') != std::string::npos) {
                 args.command += "\"" + arg + "\"";
             } else {
                 args.command += arg;
             }
+            i++;
         }
     }
 
