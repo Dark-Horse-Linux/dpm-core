@@ -177,14 +177,13 @@ int main(int argc, char** argv) { \
     /* If arguments are provided, use the first as command */ \
     if (argc > 1) { \
         command = argv[1]; \
-        /* Shift the argument array for the command handler */ \
+        /* Shift arguments for the command handler but keep the original argc count */ \
         argv++; \
         argc--; \
     } \
     \
     std::cout << "Executing command: " << command << std::endl; \
-    return dpm_module_execute(command, argc - 1, argv + 1); \
+    return dpm_module_execute(command, argc, argv); \
 }
 
 #endif // BUILD_STANDALONE
-

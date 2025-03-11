@@ -1,25 +1,14 @@
-/**
- * @file buildFuncs.hpp
- * @brief Header file for the build module support functions
- *
- * Defines functions and enumerations for the build module which creates
- * DPM packages according to specification.
- *
- * @copyright Copyright (c) 2025 SILO GROUP LLC
- * @author Chris Punches <chris.punches@silogroup.org>
- *
- * Part of the Dark Horse Linux Package Manager (DPM)
- */
 #pragma once
 
+#include <dpmdk/include/CommonModuleAPI.hpp>
 #include <string>
 #include <cstring>
-#include <vector>
 #include <getopt.h>
-#include <dpmdk/include/CommonModuleAPI.hpp>
+#include <filesystem>
+#include "helpers.hpp"
 
 /**
- * @enum Command
+* @enum Command
  * @brief Enumeration of supported commands for the build module
  */
 enum Command {
@@ -41,6 +30,7 @@ struct BuildOptions {
     std::string signature_key;     /**< Path to the GPG key for signing the package */
     bool force;                    /**< Flag to force package creation even if warnings occur */
     bool verbose;                  /**< Flag for verbose output */
+    bool show_help;                /**< Flag to show help information */
 
     // Constructor with default values
     BuildOptions() :
@@ -51,53 +41,9 @@ struct BuildOptions {
         package_name(""),
         signature_key(""),
         force(false),
-        verbose(false) {}
+        verbose(false),
+        show_help(false) {}
 };
-
-/**
- * @brief Handler for the help command
- *
- * Displays information about available commands in the build module.
- *
- * @param argc Number of arguments
- * @param argv Array of arguments
- * @return 0 on success, non-zero on failure
- */
-int cmd_help(int argc, char** argv);
-
-/**
- * @brief Handler for the create command
- *
- * Processes arguments and creates a DPM package.
- *
- * @param argc Number of arguments
- * @param argv Array of arguments
- * @return 0 on success, non-zero on failure
- */
-int cmd_create(int argc, char** argv);
-
-/**
- * @brief Handler for unknown commands
- *
- * Displays an error message for unrecognized commands.
- *
- * @param command The unrecognized command string
- * @param argc Number of arguments
- * @param argv Array of arguments
- * @return 1 to indicate failure
- */
-int cmd_unknown(const char* command, int argc, char** argv);
-
-/**
- * @brief Parses a command string into a Command enum value
- *
- * Converts a command string to the appropriate Command enum value
- * for internal routing.
- *
- * @param cmd_str The command string to parse
- * @return The corresponding Command enum value
- */
-Command parse_command(const char* cmd_str);
 
 /**
  * @brief Parses command-line arguments for the create command
@@ -110,6 +56,17 @@ Command parse_command(const char* cmd_str);
  * @return 0 on success, non-zero on failure
  */
 int parse_create_options(int argc, char** argv, BuildOptions& options);
+
+/**
+ * @brief Parses a command string into a Command enum value
+ *
+ * Converts a command string to the appropriate Command enum value
+ * for internal routing.
+ *
+ * @param cmd_str The command string to parse
+ * @return The corresponding Command enum value
+ */
+Command parse_command(const char* cmd_str);
 
 /**
  * @brief Validates the build options

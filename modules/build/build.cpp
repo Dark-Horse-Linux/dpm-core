@@ -28,11 +28,12 @@
  */
 
 #include <string>
-#include <cstring>
 #include <vector>
 #include <iostream>
 
-#include "include/buildFuncs.hpp"
+#include "include/helpers.hpp"
+#include "include/commands.hpp"
+#include "include/cli_parsers.hpp"
 
 /**
  * @def MODULE_VERSION

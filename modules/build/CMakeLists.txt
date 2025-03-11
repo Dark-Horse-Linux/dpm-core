@@ -13,7 +13,9 @@ endif()
 # Module version - used by DPM
 add_library(build MODULE
         build.cpp
-        src/buildFuncs.cpp
+        src/helpers.cpp
+        src/cli_parsers.cpp
+        src/commands.cpp
 )
 
 # Set output properties
@@ -35,7 +37,9 @@ target_link_libraries(build stdc++fs)
 # Standalone version - used for debugging
 add_executable(build_standalone
         build.cpp
-        src/buildFuncs.cpp
+        src/helpers.cpp
+        src/cli_parsers.cpp
+        src/commands.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build
