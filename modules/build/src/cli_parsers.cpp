@@ -30,8 +30,6 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
                 options.hooks_dir = value;
             } else if (option == "--name") {
                 options.package_name = value;
-            } else if (option == "--sign") {
-                options.signature_key = value;
             } else if (option == "--force") {
                 options.force = true;
             } else if (option == "--verbose") {
@@ -51,7 +49,6 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
         {"metadata", required_argument, 0, 'm'},
         {"hooks", required_argument, 0, 'H'},
         {"name", required_argument, 0, 'n'},
-        {"sign", required_argument, 0, 's'},
         {"force", no_argument, 0, 'f'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
@@ -66,7 +63,7 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     int opt;
     int option_index = 0;
 
-    while ((opt = getopt_long(argc, argv, "o:c:m:H:n:s:fvh", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:c:m:H:n:fvh", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'o':
                 options.output_dir = optarg;
@@ -82,9 +79,6 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
                 break;
             case 'n':
                 options.package_name = optarg;
-                break;
-            case 's':
-                options.signature_key = optarg;
                 break;
             case 'f':
                 options.force = true;
@@ -118,10 +112,6 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
 
     if (!options.hooks_dir.empty()) {
         options.hooks_dir = expand_path(options.hooks_dir);
-    }
-
-    if (!options.signature_key.empty()) {
-        options.signature_key = expand_path(options.signature_key);
     }
 
     // Log the parsed options for debugging
@@ -181,12 +171,6 @@ int validate_build_options(const BuildOptions& options) {
     // Check if output directory exists
     if (!std::filesystem::exists(options.output_dir)) {
         dpm_log(LOG_ERROR, ("Output directory does not exist: " + options.output_dir).c_str());
-        return 1;
-    }
-
-    // Check if signature key exists if provided
-    if (!options.signature_key.empty() && !std::filesystem::exists(options.signature_key)) {
-        dpm_log(LOG_ERROR, ("Signature key file does not exist: " + options.signature_key).c_str());
         return 1;
     }
 

@@ -36,10 +36,6 @@ int cmd_create(int argc, char** argv) {
             dpm_log(LOG_INFO, ("  Package name: " + options.package_name).c_str());
         }
 
-        if (!options.signature_key.empty()) {
-            dpm_log(LOG_INFO, ("  Signature key: " + options.signature_key).c_str());
-        }
-
         if (options.force) {
             dpm_log(LOG_INFO, "  Force: Yes");
         }
@@ -65,7 +61,6 @@ int cmd_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "  -m, --metadata DIR      Directory with package metadata (required)");
     dpm_log(LOG_INFO, "  -H, --hooks DIR         Directory with package hooks (optional)");
     dpm_log(LOG_INFO, "  -n, --name NAME         Package name (required if not in metadata)");
-    dpm_log(LOG_INFO, "  -s, --sign KEY          Path to GPG key for signing the package (optional)");
     dpm_log(LOG_INFO, "  -f, --force             Force package creation even if warnings occur");
     dpm_log(LOG_INFO, "  -v, --verbose           Enable verbose output");
     dpm_log(LOG_INFO, "  -h, --help              Display this help message");

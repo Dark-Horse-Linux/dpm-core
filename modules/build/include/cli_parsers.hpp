@@ -27,7 +27,6 @@ struct BuildOptions {
     std::string metadata_dir;      /**< Directory with package metadata */
     std::string hooks_dir;         /**< Directory with package hooks */
     std::string package_name;      /**< Name of the package to build */
-    std::string signature_key;     /**< Path to the GPG key for signing the package */
     bool force;                    /**< Flag to force package creation even if warnings occur */
     bool verbose;                  /**< Flag for verbose output */
     bool show_help;                /**< Flag to show help information */
@@ -39,7 +38,6 @@ struct BuildOptions {
         metadata_dir(""),
         hooks_dir(""),
         package_name(""),
-        signature_key(""),
         force(false),
         verbose(false),
         show_help(false) {}
