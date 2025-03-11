@@ -52,9 +52,6 @@ int cmd_create(int argc, char** argv) {
     return 0;
 }
 
-/**
- * @brief Handler for the help command
- */
 int cmd_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "DPM Build Module - Creates DPM packages according to specification");
     dpm_log(LOG_INFO, "Available commands:");
@@ -75,9 +72,6 @@ int cmd_help(int argc, char** argv) {
     return 0;
 }
 
-/**
- * @brief Handler for unknown commands
- */
 int cmd_unknown(const char* command, int argc, char** argv) {
     std::string msg = "Unknown command: ";
     msg += (command ? command : "");

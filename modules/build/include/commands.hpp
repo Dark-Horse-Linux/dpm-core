@@ -25,3 +25,15 @@ int cmd_create(int argc, char** argv);
  * @return 0 on success, non-zero on failure
  */
 int cmd_help(int argc, char** argv);
+
+/**
+ * @brief Handler for unknown commands
+ *
+ * Displays an error message for unrecognized commands.
+ *
+ * @param command The unrecognized command string
+ * @param argc Number of arguments
+ * @param argv Array of arguments
+ * @return 1 to indicate failure
+ */
+int cmd_unknown(const char* command, int argc, char** argv);

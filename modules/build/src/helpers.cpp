@@ -13,9 +13,6 @@
 
 #include "helpers.hpp"
 
-/**
- * @brief Expands environment variables and tildes in a path
- */
 std::string expand_path(const std::string& path) {
     wordexp_t exp_result;
     std::string expanded_path = path;

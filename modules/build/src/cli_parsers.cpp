@@ -145,9 +145,6 @@ Command parse_command(const char* cmd_str) {
     return CMD_UNKNOWN;
 }
 
-/**
- * @brief Validates the build options
- */
 int validate_build_options(const BuildOptions& options) {
     // Check if contents directory is provided and exists
     if (options.contents_dir.empty()) {
