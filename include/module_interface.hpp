@@ -120,5 +120,15 @@ extern "C" {
      * @param message The message to log
      */
     void dpm_log(int level, const char* message);
+
+    /**
+     * @brief Sets the logging level
+     *
+     * Allows modules to set the logging level used by the DPM logging system.
+     * This is useful for implementing verbose modes in modules.
+     *
+     * @param level The log level as an integer (0=FATAL, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG)
+     */
+    void dpm_set_logging_level(int level);
 }
 /** @} */

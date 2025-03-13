@@ -130,6 +130,16 @@ extern "C" {
      * @param message The message to log
      */
     void dpm_log(int level, const char* message);
+
+    /**
+     * @brief Sets the logging level
+     *
+     * Allows modules to set the logging level used by the DPM logging system.
+     * This is useful for implementing verbose modes in modules.
+     *
+     * @param level The log level (LOG_FATAL, LOG_ERROR, LOG_WARN, LOG_INFO, LOG_DEBUG)
+     */
+    void dpm_set_logging_level(int level);
 }
 
 /**
@@ -166,6 +176,9 @@ extern "C" void dpm_log(int level, const char* message) { \
 } \
 extern "C" const char* dpm_get_config(const char* section, const char* key) { \
     return nullptr; \
+} \
+extern "C" void dpm_set_logging_level(int level) { \
+    std::cout << "[INFO] Verbosity level ignored, as all standalone executions have maximum verbosity" << std::endl; \
 } \
 int main(int argc, char** argv) { \
     std::cout << "Module version: " << dpm_module_get_version() << std::endl; \

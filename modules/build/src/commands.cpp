@@ -1,5 +1,6 @@
 #include "commands.hpp"
 
+
 int cmd_stage(int argc, char** argv) {
     // create a container for commandline options
     BuildOptions options;
@@ -15,38 +16,40 @@ int cmd_stage(int argc, char** argv) {
         return cmd_help(argc, argv);
     }
 
+    // Set logging level to DEBUG when verbose is enabled
+    if (options.verbose) {
+        dpm_set_logging_level(LOG_DEBUG);
+    }
+
     // Validate options
     int validate_result = validate_build_options(options);
     if (validate_result != 0) {
         return validate_result;
     }
 
-    // Log the operation
-    if (options.verbose) {
-        dpm_log(LOG_INFO, "Staging DPM package with the following options:");
-        dpm_log(LOG_INFO, ("  Output directory: " + options.output_dir).c_str());
-        dpm_log(LOG_INFO, ("  Contents directory: " + options.contents_dir).c_str());
+    // Log detailed options (only visible in verbose mode)
+    dpm_log(LOG_DEBUG, "Staging DPM package with the following options:");
+    dpm_log(LOG_DEBUG, ("  Output directory: " + options.output_dir).c_str());
+    dpm_log(LOG_DEBUG, ("  Contents directory: " + options.contents_dir).c_str());
 
-        if (!options.hooks_dir.empty()) {
-            dpm_log(LOG_INFO, ("  Hooks directory: " + options.hooks_dir).c_str());
-        }
-
-        if (!options.package_name.empty()) {
-            dpm_log(LOG_INFO, ("  Package name: " + options.package_name).c_str());
-        }
-
-        if (options.force) {
-            dpm_log(LOG_INFO, "  Force: Yes");
-        }
+    if (!options.hooks_dir.empty()) {
+        dpm_log(LOG_DEBUG, ("  Hooks directory: " + options.hooks_dir).c_str());
     }
 
-    // For now, just log that we would stage the package
+    if (!options.package_name.empty()) {
+        dpm_log(LOG_DEBUG, ("  Package name: " + options.package_name).c_str());
+    }
+
+    if (options.force) {
+        dpm_log(LOG_DEBUG, "  Force: Yes");
+    }
+
+    // Standard info logs that are always visible
     dpm_log(LOG_INFO, "Package staging functionality not yet implemented");
     dpm_log(LOG_INFO, "Would stage package directory using the provided options");
 
     return 0;
 }
-
 
 int cmd_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "DPM Build Module - Creates DPM packages according to specification");
