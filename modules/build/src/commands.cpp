@@ -1,6 +1,6 @@
 #include "commands.hpp"
 
-int cmd_create(int argc, char** argv) {
+int cmd_stage(int argc, char** argv) {
     // create a container for commandline options
     BuildOptions options;
 
@@ -23,10 +23,9 @@ int cmd_create(int argc, char** argv) {
 
     // Log the operation
     if (options.verbose) {
-        dpm_log(LOG_INFO, "Creating DPM package with the following options:");
+        dpm_log(LOG_INFO, "Staging DPM package with the following options:");
         dpm_log(LOG_INFO, ("  Output directory: " + options.output_dir).c_str());
         dpm_log(LOG_INFO, ("  Contents directory: " + options.contents_dir).c_str());
-        dpm_log(LOG_INFO, ("  Metadata directory: " + options.metadata_dir).c_str());
 
         if (!options.hooks_dir.empty()) {
             dpm_log(LOG_INFO, ("  Hooks directory: " + options.hooks_dir).c_str());
@@ -41,27 +40,27 @@ int cmd_create(int argc, char** argv) {
         }
     }
 
-    // For now, just log that we would create the package
-    dpm_log(LOG_INFO, "Package creation functionality not yet implemented");
-    dpm_log(LOG_INFO, "Would create package using the provided options");
+    // For now, just log that we would stage the package
+    dpm_log(LOG_INFO, "Package staging functionality not yet implemented");
+    dpm_log(LOG_INFO, "Would stage package directory using the provided options");
 
     return 0;
 }
 
+
 int cmd_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "DPM Build Module - Creates DPM packages according to specification");
     dpm_log(LOG_INFO, "Available commands:");
-    dpm_log(LOG_INFO, "  create     - Create a new DPM package");
+    dpm_log(LOG_INFO, "  stage      - Stage a new DPM package directory");
     dpm_log(LOG_INFO, "  help       - Display this help message");
     dpm_log(LOG_INFO, "");
-    dpm_log(LOG_INFO, "Usage: dpm build create [options]");
+    dpm_log(LOG_INFO, "Usage: dpm build stage [options]");
     dpm_log(LOG_INFO, "Options:");
-    dpm_log(LOG_INFO, "  -o, --output-dir DIR    Directory to save the built package (default: current directory)");
+    dpm_log(LOG_INFO, "  -o, --output-dir DIR    Directory to save the staged package (default: current directory)");
     dpm_log(LOG_INFO, "  -c, --contents DIR      Directory with package contents (required)");
-    dpm_log(LOG_INFO, "  -m, --metadata DIR      Directory with package metadata (required)");
     dpm_log(LOG_INFO, "  -H, --hooks DIR         Directory with package hooks (optional)");
     dpm_log(LOG_INFO, "  -n, --name NAME         Package name (required if not in metadata)");
-    dpm_log(LOG_INFO, "  -f, --force             Force package creation even if warnings occur");
+    dpm_log(LOG_INFO, "  -f, --force             Force package staging even if warnings occur");
     dpm_log(LOG_INFO, "  -v, --verbose           Enable verbose output");
     dpm_log(LOG_INFO, "  -h, --help              Display this help message");
     return 0;

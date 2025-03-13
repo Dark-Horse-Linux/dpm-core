@@ -24,8 +24,6 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
                 options.output_dir = value;
             } else if (option == "--contents") {
                 options.contents_dir = value;
-            } else if (option == "--metadata") {
-                options.metadata_dir = value;
             } else if (option == "--hooks") {
                 options.hooks_dir = value;
             } else if (option == "--name") {
@@ -46,7 +44,6 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     static struct option long_options[] = {
         {"output-dir", required_argument, 0, 'o'},
         {"contents", required_argument, 0, 'c'},
-        {"metadata", required_argument, 0, 'm'},
         {"hooks", required_argument, 0, 'H'},
         {"name", required_argument, 0, 'n'},
         {"force", no_argument, 0, 'f'},
@@ -63,16 +60,13 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     int opt;
     int option_index = 0;
 
-    while ((opt = getopt_long(argc, argv, "o:c:m:H:n:fvh", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:c:H:n:fvh", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'o':
                 options.output_dir = optarg;
                 break;
             case 'c':
                 options.contents_dir = optarg;
-                break;
-            case 'm':
-                options.metadata_dir = optarg;
                 break;
             case 'H':
                 options.hooks_dir = optarg;
@@ -106,10 +100,6 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
         options.contents_dir = expand_path(options.contents_dir);
     }
 
-    if (!options.metadata_dir.empty()) {
-        options.metadata_dir = expand_path(options.metadata_dir);
-    }
-
     if (!options.hooks_dir.empty()) {
         options.hooks_dir = expand_path(options.hooks_dir);
     }
@@ -132,8 +122,8 @@ Command parse_command(const char* cmd_str) {
     else if (strcmp(cmd_str, "help") == 0) {
         return CMD_HELP;
     }
-    else if (strcmp(cmd_str, "create") == 0) {
-        return CMD_CREATE;
+    else if (strcmp(cmd_str, "stage") == 0) {
+        return CMD_STAGE;
     }
 
     return CMD_UNKNOWN;
@@ -148,17 +138,6 @@ int validate_build_options(const BuildOptions& options) {
 
     if (!std::filesystem::exists(options.contents_dir)) {
         dpm_log(LOG_ERROR, ("Contents directory does not exist: " + options.contents_dir).c_str());
-        return 1;
-    }
-
-    // Check if metadata directory is provided and exists
-    if (options.metadata_dir.empty()) {
-        dpm_log(LOG_ERROR, "Metadata directory is required (--metadata)");
-        return 1;
-    }
-
-    if (!std::filesystem::exists(options.metadata_dir)) {
-        dpm_log(LOG_ERROR, ("Metadata directory does not exist: " + options.metadata_dir).c_str());
         return 1;
     }
 

@@ -5,15 +5,15 @@
 #include <filesystem>
 
 /**
- * @brief Handler for the create command
+ * @brief Handler for the stage command
  *
- * Processes arguments and creates a DPM package.
+ * Processes arguments and stages a DPM package.
  *
  * @param argc Number of arguments
  * @param argv Array of arguments
  * @return 0 on success, non-zero on failure
  */
-int cmd_create(int argc, char** argv);
+int cmd_stage(int argc, char** argv);
 
 /**
  * @brief Handler for the help command

@@ -14,7 +14,7 @@
 enum Command {
     CMD_UNKNOWN,    /**< Unknown or unsupported command */
     CMD_HELP,       /**< Display help information */
-    CMD_CREATE      /**< Create a new DPM package */
+    CMD_STAGE       /**< Stage a new DPM package */
 };
 
 /**
@@ -24,7 +24,6 @@ enum Command {
 struct BuildOptions {
     std::string output_dir;        /**< Directory where to save the built package */
     std::string contents_dir;      /**< Directory with package contents */
-    std::string metadata_dir;      /**< Directory with package metadata */
     std::string hooks_dir;         /**< Directory with package hooks */
     std::string package_name;      /**< Name of the package to build */
     bool force;                    /**< Flag to force package creation even if warnings occur */
@@ -35,7 +34,6 @@ struct BuildOptions {
     BuildOptions() :
         output_dir("."),
         contents_dir(""),
-        metadata_dir(""),
         hooks_dir(""),
         package_name(""),
         force(false),

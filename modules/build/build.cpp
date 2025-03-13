@@ -85,15 +85,15 @@ extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
 
     // Route to the appropriate command handler
     switch (cmd) {
-        case CMD_CREATE:
-            return cmd_create(argc, argv);
+        case CMD_STAGE:
+            return cmd_stage(argc, argv);
 
         case CMD_HELP:
             return cmd_help(argc, argv);
 
         case CMD_UNKNOWN:
-        default:
-            return cmd_unknown(command, argc, argv);
+            default:
+                return cmd_unknown(command, argc, argv);
     }
 }
 
