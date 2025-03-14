@@ -86,7 +86,7 @@ extern "C" const char* dpm_get_description(void) {
  * @return 0 on success, non-zero on failure
  */
 extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
-    dpm_log(LOG_INFO, "Info module execution started");
+    dpm_log(LOG_DEBUG, "Info module execution started.");
 
     Command cmd = parse_command(command);
 
