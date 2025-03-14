@@ -25,13 +25,14 @@ int cmd_stage(int argc, char** argv) {
 
     // If OS is not supplied, try to get it from config
     if (options.os.empty()) {
+        dpm_log( LOG_DEBUG, "Target OS not provided as a commandline argument.");
         const char* config_os = dpm_get_config("build", "os");
         if (config_os != nullptr) {
             options.os = config_os;
-            dpm_log(LOG_DEBUG, ("Using OS from config: " + options.os).c_str());
+            dpm_log(LOG_DEBUG, ("Using build.os from config: " + options.os).c_str());
         } else {
-            dpm_log(LOG_ERROR, "OS not specified and not found in configuration");
-            dpm_log(LOG_ERROR, "Please specify OS with --os or set a default in /etc/dpm/conf.d/build.conf");
+            dpm_log(LOG_ERROR, "Target OS not specified and not found as build.os in configuration.");
+            dpm_log(LOG_ERROR, "Please specify OS with --os or set a default at build.os in '/etc/dpm/conf.d/'.");
             return 1;
         }
     }
