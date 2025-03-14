@@ -27,17 +27,21 @@ struct BuildOptions {
     std::string hooks_dir;         /**< Directory with package hooks */
     std::string package_name;      /**< Name of the package to build */
     std::string package_version;   /**< Version of the package to build */
+    std::string architecture;      /**< Architecture of the package (e.g., x86_64, aarch64) */
+    std::string os;                /**< Optional OS of the package (e.g., dhl2) */
     bool force;                    /**< Flag to force package creation even if warnings occur */
     bool verbose;                  /**< Flag for verbose output */
     bool show_help;                /**< Flag to show help information */
 
-    // Constructor with only force and verbose defaulted
+    // Constructor with defaults
     BuildOptions() :
         output_dir(""),
         contents_dir(""),
         hooks_dir(""),
         package_name(""),
         package_version(""),
+        architecture(""),
+        os(""),
         force(false),
         verbose(false),
         show_help(false) {}

@@ -16,6 +16,8 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     bool hooks_dir_provided = false;
     bool package_name_provided = false;
     bool package_version_provided = false;
+    bool architecture_provided = false;
+    bool os_provided = false;
     bool force_provided = false;
     bool verbose_provided = false;
     bool help_provided = false;
@@ -54,6 +56,12 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
             } else if (option == "--version") {
                 options.package_version = value;
                 package_version_provided = true;
+            } else if (option == "--architecture") {
+                options.architecture = value;
+                architecture_provided = true;
+            } else if (option == "--os") {
+                options.os = value;
+                os_provided = true;
             } else if (option == "--force") {
                 // Parse the boolean value
                 options.force = (value == "true" || value == "1" || value == "yes");
@@ -79,6 +87,8 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
         {"hooks", required_argument, 0, 'H'},
         {"name", required_argument, 0, 'n'},
         {"version", required_argument, 0, 'V'},
+        {"architecture", required_argument, 0, 'a'},
+        {"os", required_argument, 0, 'O'},
         {"force", no_argument, 0, 'f'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
@@ -93,7 +103,7 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     int opt;
     int option_index = 0;
 
-    while ((opt = getopt_long(argc, argv, "o:c:H:n:V:fvh", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:c:H:n:V:a:O:fvh", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'o':
                 options.output_dir = optarg;
@@ -114,6 +124,14 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
             case 'V':
                 options.package_version = optarg;
                 package_version_provided = true;
+                break;
+            case 'a':
+                options.architecture = optarg;
+                architecture_provided = true;
+                break;
+            case 'O':
+                options.os = optarg;
+                os_provided = true;
                 break;
             case 'f':
                 options.force = true;
@@ -174,6 +192,16 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
 
     if (package_version_provided) {
         dpm_log(LOG_DEBUG, ("  package_version=" + options.package_version).c_str());
+        any_options_provided = true;
+    }
+
+    if (architecture_provided) {
+        dpm_log(LOG_DEBUG, ("  architecture=" + options.architecture).c_str());
+        any_options_provided = true;
+    }
+
+    if (os_provided) {
+        dpm_log(LOG_DEBUG, ("  os=" + options.os).c_str());
         any_options_provided = true;
     }
 
@@ -246,6 +274,12 @@ int validate_build_options(const BuildOptions& options) {
     // Check if package version is provided
     if (options.package_version.empty()) {
         dpm_log(LOG_ERROR, "Package version is required (--version)");
+        return 1;
+    }
+
+    // Check if architecture is provided
+    if (options.architecture.empty()) {
+        dpm_log(LOG_ERROR, "Architecture is required (--architecture)");
         return 1;
     }
 
