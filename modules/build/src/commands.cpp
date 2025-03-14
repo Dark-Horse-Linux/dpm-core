@@ -2,6 +2,9 @@
 
 
 int cmd_stage(int argc, char** argv) {
+    // Announce that the stage step is being executed (debug level)
+    dpm_log(LOG_DEBUG, "Executing stage command");
+
     // create a container for commandline options
     BuildOptions options;
 
@@ -13,7 +16,7 @@ int cmd_stage(int argc, char** argv) {
 
     // If help was requested, show it and return
     if (options.show_help) {
-        return cmd_help(argc, argv);
+        return cmd_stage_help(argc, argv);
     }
 
     // Set logging level to DEBUG when verbose is enabled
@@ -24,6 +27,8 @@ int cmd_stage(int argc, char** argv) {
     // Validate options
     int validate_result = validate_build_options(options);
     if (validate_result != 0) {
+        // Show help when validation fails
+        //cmd_help(argc, argv);
         return validate_result;
     }
 
@@ -31,13 +36,13 @@ int cmd_stage(int argc, char** argv) {
     dpm_log(LOG_DEBUG, "Staging DPM package with the following options:");
     dpm_log(LOG_DEBUG, ("  Output directory: " + options.output_dir).c_str());
     dpm_log(LOG_DEBUG, ("  Contents directory: " + options.contents_dir).c_str());
+    dpm_log(LOG_DEBUG, ("  Package name: " + options.package_name).c_str());
+    dpm_log(LOG_DEBUG, ("  Package version: " + options.package_version).c_str());
 
     if (!options.hooks_dir.empty()) {
         dpm_log(LOG_DEBUG, ("  Hooks directory: " + options.hooks_dir).c_str());
-    }
-
-    if (!options.package_name.empty()) {
-        dpm_log(LOG_DEBUG, ("  Package name: " + options.package_name).c_str());
+    } else {
+        dpm_log(LOG_DEBUG, "  Hooks directory: N/A");
     }
 
     if (options.force) {
@@ -52,20 +57,16 @@ int cmd_stage(int argc, char** argv) {
 }
 
 int cmd_help(int argc, char** argv) {
-    dpm_log(LOG_INFO, "DPM Build Module - Creates DPM packages according to specification");
+    dpm_log(LOG_INFO, "DPM Build Module - Creates DPM packages according to specification.");
+    dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Available commands:");
     dpm_log(LOG_INFO, "  stage      - Stage a new DPM package directory");
     dpm_log(LOG_INFO, "  help       - Display this help message");
     dpm_log(LOG_INFO, "");
-    dpm_log(LOG_INFO, "Usage: dpm build stage [options]");
-    dpm_log(LOG_INFO, "Options:");
-    dpm_log(LOG_INFO, "  -o, --output-dir DIR    Directory to save the staged package (default: current directory)");
-    dpm_log(LOG_INFO, "  -c, --contents DIR      Directory with package contents (required)");
-    dpm_log(LOG_INFO, "  -H, --hooks DIR         Directory with package hooks (optional)");
-    dpm_log(LOG_INFO, "  -n, --name NAME         Package name (required if not in metadata)");
-    dpm_log(LOG_INFO, "  -f, --force             Force package staging even if warnings occur");
-    dpm_log(LOG_INFO, "  -v, --verbose           Enable verbose output");
-    dpm_log(LOG_INFO, "  -h, --help              Display this help message");
+    dpm_log(LOG_INFO, "Usage: dpm build <command>");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "For command-specific help, use: dpm build <command> --help");
+
     return 0;
 }
 
@@ -77,5 +78,17 @@ int cmd_unknown(const char* command, int argc, char** argv) {
     return 1;
 }
 
-
-
+int cmd_stage_help(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Usage: dpm build stage [options]");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Options:");
+    dpm_log(LOG_INFO, "  -o, --output-dir DIR    Directory to save the staged package (required)");
+    dpm_log(LOG_INFO, "  -c, --contents DIR      Directory with package contents (required)");
+    dpm_log(LOG_INFO, "  -H, --hooks DIR         Directory with package hooks (optional)");
+    dpm_log(LOG_INFO, "  -n, --name NAME         Package name (required)");
+    dpm_log(LOG_INFO, "  -V, --version VERSION   Package version (required)");
+    dpm_log(LOG_INFO, "  -f, --force             Force package staging even if warnings occur");
+    dpm_log(LOG_INFO, "  -v, --verbose           Enable verbose output");
+    dpm_log(LOG_INFO, "  -h, --help              Display this help message");
+    return 0;
+}

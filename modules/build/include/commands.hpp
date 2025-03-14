@@ -26,6 +26,19 @@ int cmd_stage(int argc, char** argv);
  */
 int cmd_help(int argc, char** argv);
 
+
+/**
+ * @brief Handler for the help command
+ *
+ * Displays information about available commands in the build module.
+ *
+ * @param argc Number of arguments
+ * @param argv Array of arguments
+ * @return 0 on success, non-zero on failure
+ */
+int cmd_stage_help(int argc, char** argv);
+
+
 /**
  * @brief Handler for unknown commands
  *

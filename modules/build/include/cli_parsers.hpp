@@ -26,16 +26,18 @@ struct BuildOptions {
     std::string contents_dir;      /**< Directory with package contents */
     std::string hooks_dir;         /**< Directory with package hooks */
     std::string package_name;      /**< Name of the package to build */
+    std::string package_version;   /**< Version of the package to build */
     bool force;                    /**< Flag to force package creation even if warnings occur */
     bool verbose;                  /**< Flag for verbose output */
     bool show_help;                /**< Flag to show help information */
 
-    // Constructor with default values
+    // Constructor with only force and verbose defaulted
     BuildOptions() :
-        output_dir("."),
+        output_dir(""),
         contents_dir(""),
         hooks_dir(""),
         package_name(""),
+        package_version(""),
         force(false),
         verbose(false),
         show_help(false) {}

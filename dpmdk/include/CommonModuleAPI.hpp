@@ -163,40 +163,36 @@ extern "C" {
  */
 #define DPM_MODULE_STANDALONE_MAIN() \
 extern "C" void dpm_log(int level, const char* message) { \
-    const char* level_str; \
-    switch (level) { \
-        case 0: level_str = "FATAL"; break; \
-        case 1: level_str = "ERROR"; break; \
-        case 2: level_str = "WARN"; break; \
-        case 3: level_str = "INFO"; break; \
-        case 4: level_str = "DEBUG"; break; \
-        default: level_str = "UNKNOWN"; break; \
-    } \
-    std::cout << "[" << level_str << "] " << message << std::endl; \
+const char* level_str; \
+switch (level) { \
+case 0: level_str = "FATAL"; break; \
+case 1: level_str = "ERROR"; break; \
+case 2: level_str = "WARN"; break; \
+case 3: level_str = "INFO"; break; \
+case 4: level_str = "DEBUG"; break; \
+default: level_str = "UNKNOWN"; break; \
+} \
+std::cout << "[" << level_str << "] " << message << std::endl; \
 } \
 extern "C" const char* dpm_get_config(const char* section, const char* key) { \
-    return nullptr; \
+return nullptr; \
 } \
 extern "C" void dpm_set_logging_level(int level) { \
-    std::cout << "[INFO] Verbosity level ignored, as all standalone executions have maximum verbosity" << std::endl; \
+std::cout << "[INFO] Verbosity level ignored, as all standalone executions have maximum verbosity" << std::endl; \
 } \
 int main(int argc, char** argv) { \
-    std::cout << "Module version: " << dpm_module_get_version() << std::endl; \
-    std::cout << "Description: " << dpm_get_description() << std::endl; \
-    \
-    /* Default to "help" if no command is provided */ \
-    const char* command = "help"; \
-    \
-    /* If arguments are provided, use the first as command */ \
-    if (argc > 1) { \
-        command = argv[1]; \
-        /* Shift arguments for the command handler but keep the original argc count */ \
-        argv++; \
-        argc--; \
-    } \
-    \
-    std::cout << "Executing command: " << command << std::endl; \
-    return dpm_module_execute(command, argc, argv); \
+/* Default to "help" if no command is provided */ \
+const char* command = "help"; \
+\
+/* If arguments are provided, use the first as command */ \
+if (argc > 1) { \
+command = argv[1]; \
+/* Shift arguments for the command handler but keep the original argc count */ \
+argv++; \
+argc--; \
+} \
+\
+return dpm_module_execute(command, argc, argv); \
 }
 
 #endif // BUILD_STANDALONE

@@ -1,17 +1,15 @@
 #include "cli_parsers.hpp"
 
-
 int parse_create_options(int argc, char** argv, BuildOptions& options) {
-    // Extend BuildOptions to track which options were provided on command line
-    struct {
-        bool output_dir = false;
-        bool contents_dir = false;
-        bool hooks_dir = false;
-        bool package_name = false;
-        bool force = false;
-        bool verbose = false;
-        bool help = false;
-    } provided;
+    // Track which options were explicitly provided on command line
+    bool output_dir_provided = false;
+    bool contents_dir_provided = false;
+    bool hooks_dir_provided = false;
+    bool package_name_provided = false;
+    bool package_version_provided = false;
+    bool force_provided = false;
+    bool verbose_provided = false;
+    bool help_provided = false;
 
     // For debugging
     dpm_log(LOG_DEBUG, "Parsing command-line arguments");
@@ -34,25 +32,31 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
 
             if (option == "--output-dir") {
                 options.output_dir = value;
-                provided.output_dir = true;
+                output_dir_provided = true;
             } else if (option == "--contents") {
                 options.contents_dir = value;
-                provided.contents_dir = true;
+                contents_dir_provided = true;
             } else if (option == "--hooks") {
                 options.hooks_dir = value;
-                provided.hooks_dir = true;
+                hooks_dir_provided = true;
             } else if (option == "--name") {
                 options.package_name = value;
-                provided.package_name = true;
+                package_name_provided = true;
+            } else if (option == "--version") {
+                options.package_version = value;
+                package_version_provided = true;
             } else if (option == "--force") {
-                options.force = true;
-                provided.force = true;
+                // Parse the boolean value
+                options.force = (value == "true" || value == "1" || value == "yes");
+                force_provided = true;
             } else if (option == "--verbose") {
-                options.verbose = true;
-                provided.verbose = true;
+                // Parse the boolean value
+                options.verbose = (value == "true" || value == "1" || value == "yes");
+                verbose_provided = true;
             } else if (option == "--help") {
-                options.show_help = true;
-                provided.help = true;
+                // Parse the boolean value
+                options.show_help = (value == "true" || value == "1" || value == "yes");
+                help_provided = true;
             }
 
             // Convert this argument to a dummy to prevent getopt from processing it
@@ -65,6 +69,7 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
         {"contents", required_argument, 0, 'c'},
         {"hooks", required_argument, 0, 'H'},
         {"name", required_argument, 0, 'n'},
+        {"version", required_argument, 0, 'V'},
         {"force", no_argument, 0, 'f'},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
@@ -79,35 +84,39 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     int opt;
     int option_index = 0;
 
-    while ((opt = getopt_long(argc, argv, "o:c:H:n:fvh", long_options, &option_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:c:H:n:V:fvh", long_options, &option_index)) != -1) {
         switch (opt) {
             case 'o':
                 options.output_dir = optarg;
-                provided.output_dir = true;
+                output_dir_provided = true;
                 break;
             case 'c':
                 options.contents_dir = optarg;
-                provided.contents_dir = true;
+                contents_dir_provided = true;
                 break;
             case 'H':
                 options.hooks_dir = optarg;
-                provided.hooks_dir = true;
+                hooks_dir_provided = true;
                 break;
             case 'n':
                 options.package_name = optarg;
-                provided.package_name = true;
+                package_name_provided = true;
+                break;
+            case 'V':
+                options.package_version = optarg;
+                package_version_provided = true;
                 break;
             case 'f':
                 options.force = true;
-                provided.force = true;
+                force_provided = true;
                 break;
             case 'v':
                 options.verbose = true;
-                provided.verbose = true;
+                verbose_provided = true;
                 break;
             case 'h':
                 options.show_help = true;
-                provided.help = true;
+                help_provided = true;
                 break;
             case '?':
                 // Ignore errors as we handle equals-format options separately
@@ -130,44 +139,57 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
         options.hooks_dir = expand_path(options.hooks_dir);
     }
 
-    // Log the parsed options for debugging
+    // Log the parsed options - only include options explicitly provided by the user
     dpm_log(LOG_DEBUG, "Parsed options:");
+    bool any_options_provided = false;
 
-    if (provided.output_dir) {
+    if (output_dir_provided) {
         dpm_log(LOG_DEBUG, ("  output_dir=" + options.output_dir).c_str());
+        any_options_provided = true;
     }
 
-    if (provided.contents_dir) {
+    if (contents_dir_provided) {
         dpm_log(LOG_DEBUG, ("  contents_dir=" + options.contents_dir).c_str());
+        any_options_provided = true;
     }
 
-    if (provided.hooks_dir) {
+    if (hooks_dir_provided) {
         dpm_log(LOG_DEBUG, ("  hooks_dir=" + options.hooks_dir).c_str());
+        any_options_provided = true;
     }
 
-    if (provided.package_name) {
+    if (package_name_provided) {
         dpm_log(LOG_DEBUG, ("  package_name=" + options.package_name).c_str());
+        any_options_provided = true;
     }
 
-    if (provided.force) {
-        dpm_log(LOG_DEBUG, "  force=true");
+    if (package_version_provided) {
+        dpm_log(LOG_DEBUG, ("  package_version=" + options.package_version).c_str());
+        any_options_provided = true;
     }
 
-    if (provided.verbose) {
-        dpm_log(LOG_DEBUG, "  verbose=true");
+    if (force_provided) {
+        dpm_log(LOG_DEBUG, ("  force=" + std::string(options.force ? "true" : "false")).c_str());
+        any_options_provided = true;
     }
 
-    if (provided.help) {
-        dpm_log(LOG_DEBUG, "  help=true");
+    if (verbose_provided) {
+        dpm_log(LOG_DEBUG, ("  verbose=" + std::string(options.verbose ? "true" : "false")).c_str());
+        any_options_provided = true;
     }
 
-    if (!provided.output_dir && !provided.contents_dir && !provided.hooks_dir &&
-        !provided.package_name && !provided.force && !provided.verbose && !provided.help) {
-        dpm_log(LOG_DEBUG, "  No options were provided");
+    if (help_provided) {
+        dpm_log(LOG_DEBUG, ("  help=" + std::string(options.show_help ? "true" : "false")).c_str());
+        any_options_provided = true;
+    }
+
+    if (!any_options_provided) {
+        dpm_log(LOG_DEBUG, "  No options provided - using defaults");
     }
 
     return 0;
 }
+
 
 Command parse_command(const char* cmd_str) {
     if (cmd_str == nullptr || strlen(cmd_str) == 0) {
@@ -197,6 +219,18 @@ int validate_build_options(const BuildOptions& options) {
 
     if (!std::filesystem::exists(options.contents_dir)) {
         dpm_log(LOG_ERROR, ("Contents directory does not exist: " + options.contents_dir).c_str());
+        return 1;
+    }
+
+    // Check if package name is provided
+    if (options.package_name.empty()) {
+        dpm_log(LOG_ERROR, "Package name is required (--name)");
+        return 1;
+    }
+
+    // Check if package version is provided
+    if (options.package_version.empty()) {
+        dpm_log(LOG_ERROR, "Package version is required (--version)");
         return 1;
     }
 
