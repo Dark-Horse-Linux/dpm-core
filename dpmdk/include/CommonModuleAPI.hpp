@@ -175,7 +175,14 @@ default: level_str = "UNKNOWN"; break; \
 std::cout << "[" << level_str << "] " << message << std::endl; \
 } \
 extern "C" const char* dpm_get_config(const char* section, const char* key) { \
-return nullptr; \
+if (!section || !key) return nullptr; \
+\
+/* Create environment variable name in format SECTION_KEY */ \
+std::string env_name = std::string(section) + "_" + std::string(key); \
+\
+/* Check if environment variable exists */ \
+const char* env_value = getenv(env_name.c_str()); \
+return env_value; /* Will be null if env var doesn't exist */ \
 } \
 extern "C" void dpm_set_logging_level(int level) { \
 std::cout << "[INFO] Verbosity level ignored, as all standalone executions have maximum verbosity" << std::endl; \
