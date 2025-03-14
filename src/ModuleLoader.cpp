@@ -234,51 +234,77 @@ DPMErrorCategory ModuleLoader::load_module(const std::string& module_name, void*
     return validate_error;
 }
 
-DPMErrorCategory ModuleLoader::execute_module( const std::string& module_name, const std::string& command ) const
-{
+DPMErrorCategory ModuleLoader::execute_module(const std::string& module_name, const std::string& command) const {
     // declare a module_handle
     void * module_handle;
 
     // attempt to load the module
-    DPMErrorCategory load_error = load_module( module_name, module_handle );
-    if ( load_error != DPMErrorCategory::SUCCESS ) {
+    DPMErrorCategory load_error = load_module(module_name, module_handle);
+    if (load_error != DPMErrorCategory::SUCCESS) {
         return load_error;
     }
 
     // Clear any previous error state and handle any residual failure
     const char* pre_error = dlerror();
-    if ( pre_error != nullptr ) {
-        dlclose( module_handle );
+    if (pre_error != nullptr) {
+        dlclose(module_handle);
         return DPMErrorCategory::UNDEFINED_ERROR;
     }
 
     // declare a function pointer type to hold the module symbol to execute
-    typedef int (*ExecuteFn) ( const char*, int, char** );
+    typedef int (*ExecuteFn) (const char*, int, char** );
 
     // populate that void pointer to the execute symbol in the module with
-    ExecuteFn execute_fn = (ExecuteFn) dlsym( module_handle, "dpm_module_execute" );
+    ExecuteFn execute_fn = (ExecuteFn) dlsym(module_handle, "dpm_module_execute");
 
     // do basic error handling to detect if the symbol look up was successful
     const char * dlsym_error = dlerror();
-    if ( dlsym_error != nullptr ) {
-        dlclose( module_handle );
+    if (dlsym_error != nullptr) {
+        dlclose(module_handle);
         return DPMErrorCategory::SYMBOL_NOT_FOUND;
     }
 
     // check if the void pointer was populated
-    if ( execute_fn == nullptr ) {
-        dlclose( module_handle );
+    if (execute_fn == nullptr) {
+        dlclose(module_handle);
         return DPMErrorCategory::SYMBOL_NOT_FOUND;
     }
 
-    // execute the symbol that was loaded and supply the command string being routed from DPM
-    int exec_error = execute_fn( command.c_str(), 0, nullptr );
+    // Split the command by spaces to get arguments
+    std::vector<std::string> args;
+    std::string arg;
+    std::istringstream iss(command);
+    while (iss >> arg) {
+        args.push_back(arg);
+    }
+
+    // Create argc and argv for all arguments
+    int argc = args.size();
+    char** argv = new char*[argc];
+    for (int i = 0; i < argc; i++) {
+        argv[i] = strdup(args[i].c_str());
+    }
+
+    // Get the first argument as the command (or empty string if no arguments)
+    const char* cmd = "";
+    if (!args.empty()) {
+        cmd = args[0].c_str();
+    }
+
+    // execute the function with all arguments
+    int exec_error = execute_fn(cmd, argc, argv);
+
+    // Clean up
+    for (int i = 0; i < argc; i++) {
+        free(argv[i]);
+    }
+    delete[] argv;
 
     // irregardless of result, this is the time to close the module handle
-    dlclose( module_handle );
+    dlclose(module_handle);
 
     // if the result of execution was not 0, return an error
-    if ( exec_error != 0 ) {
+    if (exec_error != 0) {
         return DPMErrorCategory::SYMBOL_EXECUTION_FAILED;
     }
 

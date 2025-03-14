@@ -1,6 +1,15 @@
 #include "cli_parsers.hpp"
 
 int parse_create_options(int argc, char** argv, BuildOptions& options) {
+    // Check for help flags directly before any other parsing
+    for (int i = 0; i < argc; i++) {
+        if (argv[i] && (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "help") == 0)) {
+            options.show_help = true;
+            // Skip all other parsing for help flag
+            return 0;
+        }
+    }
+
     // Track which options were explicitly provided on command line
     bool output_dir_provided = false;
     bool contents_dir_provided = false;
@@ -190,10 +199,14 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     return 0;
 }
 
-
 Command parse_command(const char* cmd_str) {
     if (cmd_str == nullptr || strlen(cmd_str) == 0) {
         return CMD_HELP;
+    }
+
+    // Check for stage command, including when it has additional arguments
+    if (strncmp(cmd_str, "stage", 5) == 0) {
+        return CMD_STAGE;
     }
 
     // Check if cmd_str is a help option
@@ -203,14 +216,16 @@ Command parse_command(const char* cmd_str) {
     else if (strcmp(cmd_str, "help") == 0) {
         return CMD_HELP;
     }
-    else if (strcmp(cmd_str, "stage") == 0) {
-        return CMD_STAGE;
-    }
 
     return CMD_UNKNOWN;
 }
 
 int validate_build_options(const BuildOptions& options) {
+    // Check if help was requested - skip validation in this case
+    if (options.show_help) {
+        return 0;
+    }
+
     // Check if contents directory is provided and exists
     if (options.contents_dir.empty()) {
         dpm_log(LOG_ERROR, "Contents directory is required (--contents)");

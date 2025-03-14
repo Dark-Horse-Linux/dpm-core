@@ -27,8 +27,6 @@ int cmd_stage(int argc, char** argv) {
     // Validate options
     int validate_result = validate_build_options(options);
     if (validate_result != 0) {
-        // Show help when validation fails
-        //cmd_help(argc, argv);
         return validate_result;
     }
 

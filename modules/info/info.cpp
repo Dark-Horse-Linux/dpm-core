@@ -68,7 +68,7 @@ extern "C" const char* dpm_module_get_version(void) {
  * @return Const char pointer to the module description string
  */
 extern "C" const char* dpm_get_description(void) {
-    return "DPM Info Module - Provides information about the DPM system";
+    return "Provides information about the DPM system.";
 }
 
 

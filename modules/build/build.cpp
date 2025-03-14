@@ -64,7 +64,7 @@ extern "C" const char* dpm_module_get_version(void) {
  * @return Const char pointer to the module description string
  */
 extern "C" const char* dpm_get_description(void) {
-    return "DPM Build Module - Creates DPM packages according to specification";
+    return "Creates DPM packages according to specification.";
 }
 
 /**
