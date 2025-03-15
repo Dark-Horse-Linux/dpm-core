@@ -329,6 +329,99 @@ static bool stage_populate_basic_metadata(
     }
 }
 
+/**
+ * @brief Updates the contents manifest file for a package
+ *
+ * Creates the CONTENTS_MANIFEST_DIGEST file by scanning the contents directory
+ * and generating a line for each file with control designation,
+ * checksum, permissions, ownership, and path information.
+ *
+ * @param package_dir Root directory of the package being staged
+ * @return true if manifest generation was successful, false otherwise
+ */
+static bool update_contents_manifest(const std::filesystem::path& package_dir)
+{
+    try {
+        std::filesystem::path contents_dir = package_dir / "contents";
+        std::filesystem::path manifest_path = package_dir / "metadata" / "CONTENTS_MANIFEST_DIGEST";
+
+        // Open manifest file for writing
+        std::ofstream manifest_file(manifest_path);
+        if (!manifest_file.is_open()) {
+            dpm_log(LOG_ERROR, ("Failed to open manifest file for writing: " + manifest_path.string()).c_str());
+            return false;
+        }
+
+        dpm_log(LOG_INFO, "Generating contents manifest...");
+
+        // Process each file in the contents directory recursively
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(contents_dir)) {
+            // Skip directories, we only need to record files
+            if (std::filesystem::is_directory(entry)) {
+                continue;
+            }
+
+            // Get file information
+            std::filesystem::path file_path = entry.path();
+            std::filesystem::path relative_path = std::filesystem::relative(file_path, contents_dir);
+            std::string absolute_path = "/" + relative_path.string();  // Add leading slash
+
+            // Get file stats for permissions
+            struct stat file_stat;
+            if (stat(file_path.c_str(), &file_stat) != 0) {
+                dpm_log(LOG_ERROR, ("Failed to get file stats for: " + file_path.string()).c_str());
+                continue;
+            }
+
+            // Format permissions as octal
+            char perms[5];
+            snprintf(perms, sizeof(perms), "%04o", file_stat.st_mode & 07777);
+
+            // Get owner and group information
+            struct passwd* pw = getpwuid(file_stat.st_uid);
+            struct group* gr = getgrgid(file_stat.st_gid);
+
+            std::string owner;
+            if (pw) {
+                owner = pw->pw_name;
+            } else {
+                owner = std::to_string(file_stat.st_uid);
+            }
+
+            std::string group;
+            if (gr) {
+                group = gr->gr_name;
+            } else {
+                group = std::to_string(file_stat.st_gid);
+            }
+
+            std::string ownership = owner + ":" + group;
+
+            // Calculate file checksum (placeholder - would normally use SHA-256)
+            std::string checksum = "CHECKSUM_PLACEHOLDER";  // Actual hash calculation would be here
+
+            // By default, mark all files as controlled ('C')
+            char control_designation = 'C';
+
+            // Write the manifest entry
+            // Format: control_designation checksum permissions owner:group /absolute/path
+            manifest_file << control_designation << " "
+                          << checksum << " "
+                          << perms << " "
+                          << ownership << " "
+                          << absolute_path << "\n";
+        }
+
+        manifest_file.close();
+        dpm_log(LOG_INFO, "Contents manifest generated successfully");
+        return true;
+    }
+    catch (const std::exception& e) {
+        dpm_log(LOG_ERROR, ("Failed to generate contents manifest: " + std::string(e.what())).c_str());
+        return false;
+    }
+}
+
 int build_package_stage(
     const std::string& output_dir,
     const std::string& contents_dir,
@@ -367,6 +460,12 @@ int build_package_stage(
 
     // Populate metadata files
     if (!stage_populate_basic_metadata(package_dir, package_name, package_version, architecture))
+    {
+        return 1;
+    }
+
+    // Update the contents manifest
+    if (!update_contents_manifest(package_dir))
     {
         return 1;
     }

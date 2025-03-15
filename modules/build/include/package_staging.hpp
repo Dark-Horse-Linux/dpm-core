@@ -17,6 +17,8 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <dpmdk/include/CommonModuleAPI.hpp>
+#include <pwd.h>
+#include <grp.h>
 
 /**
  * @brief Stages a DPM package
