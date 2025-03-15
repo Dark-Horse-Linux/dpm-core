@@ -1,5 +1,6 @@
 #include "commands.hpp"
 
+
 int cmd_stage(int argc, char** argv) {
     // Announce that the stage step is being executed (debug level)
     dpm_log(LOG_DEBUG, "Executing stage command");
@@ -62,11 +63,17 @@ int cmd_stage(int argc, char** argv) {
         dpm_log(LOG_DEBUG, "  Force: Yes");
     }
 
-    // Standard info logs that are always visible
-    dpm_log(LOG_INFO, "Package staging functionality not yet implemented");
-    dpm_log(LOG_INFO, "Would stage package directory using the provided options");
-
-    return 0;
+    // Call the build_package_stage function with individual parameters
+    return build_package_stage(
+        options.output_dir,
+        options.contents_dir,
+        options.hooks_dir,
+        options.package_name,
+        options.package_version,
+        options.architecture,
+        options.os,
+        options.force
+    );
 }
 
 int cmd_help(int argc, char** argv) {
@@ -91,11 +98,12 @@ int cmd_unknown(const char* command, int argc, char** argv) {
     return 1;
 }
 
+
 int cmd_stage_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "Usage: dpm build stage [options]");
     dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Options:");
-    dpm_log(LOG_INFO, "  -o, --output-dir DIR       Directory to save the staged package (required)");
+    dpm_log(LOG_INFO, "  -o, --output DIR           Directory to save the staged package (required)");
     dpm_log(LOG_INFO, "  -c, --contents DIR         Directory with package contents (required)");
     dpm_log(LOG_INFO, "  -H, --hooks DIR            Directory with package hooks (optional)");
     dpm_log(LOG_INFO, "  -n, --name NAME            Package name (required)");

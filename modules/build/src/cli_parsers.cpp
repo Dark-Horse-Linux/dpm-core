@@ -41,7 +41,7 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
             std::string option = arg.substr(0, equals_pos);
             std::string value = arg.substr(equals_pos + 1);
 
-            if (option == "--output-dir") {
+            if (option == "--output") {
                 options.output_dir = value;
                 output_dir_provided = true;
             } else if (option == "--contents") {
@@ -82,7 +82,7 @@ int parse_create_options(int argc, char** argv, BuildOptions& options) {
     }
 
     static struct option long_options[] = {
-        {"output-dir", required_argument, 0, 'o'},
+        {"output", required_argument, 0, 'o'},
         {"contents", required_argument, 0, 'c'},
         {"hooks", required_argument, 0, 'H'},
         {"name", required_argument, 0, 'n'},
@@ -254,6 +254,18 @@ int validate_build_options(const BuildOptions& options) {
         return 0;
     }
 
+    // Check if output directory is provided
+    if (options.output_dir.empty()) {
+        dpm_log(LOG_ERROR, "Output directory is required (--output)");
+        return 1;
+    }
+
+    // Check if output directory exists
+    if (!std::filesystem::exists(options.output_dir)) {
+        dpm_log(LOG_ERROR, ("Output directory does not exist: " + options.output_dir).c_str());
+        return 1;
+    }
+
     // Check if contents directory is provided and exists
     if (options.contents_dir.empty()) {
         dpm_log(LOG_ERROR, "Contents directory is required (--contents)");
@@ -286,12 +298,6 @@ int validate_build_options(const BuildOptions& options) {
     // Check if hooks directory exists if provided
     if (!options.hooks_dir.empty() && !std::filesystem::exists(options.hooks_dir)) {
         dpm_log(LOG_ERROR, ("Hooks directory does not exist: " + options.hooks_dir).c_str());
-        return 1;
-    }
-
-    // Check if output directory exists
-    if (!std::filesystem::exists(options.output_dir)) {
-        dpm_log(LOG_ERROR, ("Output directory does not exist: " + options.output_dir).c_str());
         return 1;
     }
 

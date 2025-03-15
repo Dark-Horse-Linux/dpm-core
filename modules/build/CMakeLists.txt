@@ -16,6 +16,7 @@ add_library(build MODULE
         src/helpers.cpp
         src/cli_parsers.cpp
         src/commands.cpp
+        src/package_staging.cpp
 )
 
 # Set output properties
@@ -40,6 +41,7 @@ add_executable(build_standalone
         src/helpers.cpp
         src/cli_parsers.cpp
         src/commands.cpp
+        src/package_staging.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build

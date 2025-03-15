@@ -3,6 +3,7 @@
 #include "cli_parsers.hpp"
 #include <dpmdk/include/CommonModuleAPI.hpp>
 #include <filesystem>
+#include "package_staging.hpp"
 
 /**
  * @brief Handler for the stage command
