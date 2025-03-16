@@ -27,21 +27,28 @@ std::string get_configured_hash_algorithm()
 
 std::string get_available_algorithms()
 {
+    std::vector<std::string> algorithms;
     std::vector<std::string> working_algorithms;
 
     // Initialize OpenSSL
     OpenSSL_add_all_digests();
 
-    // Test common hash algorithms explicitly to ensure they work for file hashing
-    const char* common_algos[] = {
-        "md5", "sha1", "sha224", "sha256", "sha384", "sha512",
-        "ripemd160", "whirlpool", "sm3", "sha3-224", "sha3-256",
-        "sha3-384", "sha3-512"
+    // Use OBJ_NAME_do_all to get all message digest algorithms
+    struct AllDigestsCallback {
+        static void callback(const OBJ_NAME* obj, void* arg) {
+            if (obj->type == OBJ_NAME_TYPE_MD_METH) {
+                std::vector<std::string>* algs = static_cast<std::vector<std::string>*>(arg);
+                algs->push_back(obj->name);
+            }
+        }
     };
 
-    for (const auto& algo_name : common_algos) {
-        // Get the digest
-        const EVP_MD* md = EVP_get_digestbyname(algo_name);
+    // Get all algorithm names
+    OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH, AllDigestsCallback::callback, &algorithms);
+
+    // Test each algorithm with a complete hashing process
+    for (const auto& algo_name : algorithms) {
+        const EVP_MD* md = EVP_get_digestbyname(algo_name.c_str());
         if (!md) continue;
 
         // Create context
