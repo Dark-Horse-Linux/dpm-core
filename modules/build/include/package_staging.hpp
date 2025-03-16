@@ -19,6 +19,7 @@
 #include <dpmdk/include/CommonModuleAPI.hpp>
 #include <pwd.h>
 #include <grp.h>
+#include "checksums.hpp"
 
 /**
  * @brief Stages a DPM package

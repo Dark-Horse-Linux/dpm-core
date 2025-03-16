@@ -345,14 +345,16 @@ static bool update_contents_manifest(const std::filesystem::path& package_dir)
         std::filesystem::path contents_dir = package_dir / "contents";
         std::filesystem::path manifest_path = package_dir / "metadata" / "CONTENTS_MANIFEST_DIGEST";
 
+        // Log which hash algorithm is being used
+        std::string hash_algorithm = get_configured_hash_algorithm();
+        dpm_log(LOG_INFO, ("Generating contents manifest using " + hash_algorithm + " checksums...").c_str());
+
         // Open manifest file for writing
         std::ofstream manifest_file(manifest_path);
         if (!manifest_file.is_open()) {
             dpm_log(LOG_ERROR, ("Failed to open manifest file for writing: " + manifest_path.string()).c_str());
             return false;
         }
-
-        dpm_log(LOG_INFO, "Generating contents manifest...");
 
         // Process each file in the contents directory recursively
         for (const auto& entry : std::filesystem::recursive_directory_iterator(contents_dir)) {
@@ -369,8 +371,8 @@ static bool update_contents_manifest(const std::filesystem::path& package_dir)
             // Get file stats for permissions
             struct stat file_stat;
             if (stat(file_path.c_str(), &file_stat) != 0) {
-                dpm_log(LOG_ERROR, ("Failed to get file stats for: " + file_path.string()).c_str());
-                continue;
+                dpm_log(LOG_FATAL, ("Failed to get file stats for: " + file_path.string()).c_str());
+                return false;
             }
 
             // Format permissions as octal
@@ -397,8 +399,12 @@ static bool update_contents_manifest(const std::filesystem::path& package_dir)
 
             std::string ownership = owner + ":" + group;
 
-            // Calculate file checksum (placeholder - would normally use SHA-256)
-            std::string checksum = "CHECKSUM_PLACEHOLDER";  // Actual hash calculation would be here
+            // Calculate file checksum using the configured algorithm
+            std::string checksum = generate_file_checksum(file_path);
+            if (checksum.empty()) {
+                dpm_log(LOG_FATAL, ("Failed to generate checksum for: " + file_path.string()).c_str());
+                return false;
+            }
 
             // By default, mark all files as controlled ('C')
             char control_designation = 'C';
