@@ -88,7 +88,6 @@ std::string generate_file_checksum(const std::filesystem::path& file_path)
 {
     // Get configured algorithm
     std::string algorithm_name = get_configured_hash_algorithm();
-    dpm_log(LOG_DEBUG, ("Using hash algorithm: " + algorithm_name).c_str());
 
     // Initialize OpenSSL
     OpenSSL_add_all_digests();
