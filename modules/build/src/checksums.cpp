@@ -31,28 +31,23 @@ std::string get_configured_hash_algorithm()
 std::string get_available_algorithms()
 {
     std::stringstream algorithms;
+    bool first = true;
 
-    // The OBJ_NAME_do_all_sorted will call the supplied callback function
-    // for each algorithm
-    struct AlgorithmCollector {
-        static void callback(const OBJ_NAME* obj, void* arg) {
-            if (obj->type == OBJ_NAME_TYPE_MD_METH) {
-                std::stringstream* ss = static_cast<std::stringstream*>(arg);
-                if (!ss->str().empty()) {
-                    *ss << ", ";
-                }
-                *ss << obj->name;
-            }
-        }
+    // Only list algorithms that are actually usable for file checksums
+    const char* usable_digests[] = {
+        "md5", "sha1", "sha224", "sha256", "sha384", "sha512"
     };
 
-    // Initialize OpenSSL objects
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
-
-    // Collect all digest algorithm names
-    OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH,
-                         reinterpret_cast<void (*)(const OBJ_NAME*, void*)>(AlgorithmCollector::callback),
-                         &algorithms);
+    for (const char* digest : usable_digests) {
+        // Verify the algorithm is actually available in this OpenSSL build
+        if (EVP_get_digestbyname(digest) != nullptr) {
+            if (!first) {
+                algorithms << ", ";
+            }
+            algorithms << digest;
+            first = false;
+        }
+    }
 
     return algorithms.str();
 }
