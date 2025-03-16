@@ -14,6 +14,15 @@
 
 #include <string>
 #include <filesystem>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <dpmdk/include/CommonModuleAPI.hpp>
+#include <vector>
+#include <cstring>
+#include <algorithm>
 
 /**
  * @brief Gets the configured hash algorithm or defaults to SHA-256

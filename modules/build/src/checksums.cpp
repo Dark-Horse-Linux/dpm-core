@@ -12,44 +12,69 @@
  */
 
 #include "checksums.hpp"
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <fstream>
-#include <sstream>
-#include <iomanip>
-#include <dpmdk/include/CommonModuleAPI.hpp>
+
 
 std::string get_configured_hash_algorithm()
 {
     const char* algorithm = dpm_get_config("cryptography", "checksum_algorithm");
-    if (algorithm) {
+    if (algorithm && strlen(algorithm) > 0) {
         return std::string(algorithm);
     }
-    return "sha256"; // Default to SHA-256
+
+    // Default to SHA-256 if not specified or empty
+    return "sha256";
 }
 
 std::string get_available_algorithms()
 {
-    std::stringstream algorithms;
-    bool first = true;
+    std::vector<std::string> working_algorithms;
 
-    // Only list algorithms that are actually usable for file checksums
-    const char* usable_digests[] = {
-        "md5", "sha1", "sha224", "sha256", "sha384", "sha512"
+    // Initialize OpenSSL
+    OpenSSL_add_all_digests();
+
+    // Test common hash algorithms explicitly to ensure they work for file hashing
+    const char* common_algos[] = {
+        "md5", "sha1", "sha224", "sha256", "sha384", "sha512",
+        "ripemd160", "whirlpool", "sm3", "sha3-224", "sha3-256",
+        "sha3-384", "sha3-512"
     };
 
-    for (const char* digest : usable_digests) {
-        // Verify the algorithm is actually available in this OpenSSL build
-        if (EVP_get_digestbyname(digest) != nullptr) {
-            if (!first) {
-                algorithms << ", ";
+    for (const auto& algo_name : common_algos) {
+        // Get the digest
+        const EVP_MD* md = EVP_get_digestbyname(algo_name);
+        if (!md) continue;
+
+        // Create context
+        EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+        if (!ctx) continue;
+
+        // Test full hashing sequence with dummy data
+        unsigned char dummy_data[] = "test";
+        unsigned char out_buf[EVP_MAX_MD_SIZE];
+        unsigned int out_len = 0;
+
+        bool success = false;
+        if (EVP_DigestInit_ex(ctx, md, NULL) == 1 &&
+            EVP_DigestUpdate(ctx, dummy_data, sizeof(dummy_data)) == 1 &&
+            EVP_DigestFinal_ex(ctx, out_buf, &out_len) == 1) {
+            success = true;
             }
-            algorithms << digest;
-            first = false;
+
+        EVP_MD_CTX_free(ctx);
+
+        if (success) {
+            working_algorithms.push_back(algo_name);
         }
     }
 
-    return algorithms.str();
+    // Format the list as a comma-separated string
+    std::stringstream result;
+    for (size_t i = 0; i < working_algorithms.size(); i++) {
+        if (i > 0) result << ", ";
+        result << working_algorithms[i];
+    }
+
+    return result.str();
 }
 
 std::string generate_file_checksum(const std::filesystem::path& file_path)
@@ -58,6 +83,18 @@ std::string generate_file_checksum(const std::filesystem::path& file_path)
     std::string algorithm_name = get_configured_hash_algorithm();
     dpm_log(LOG_DEBUG, ("Using hash algorithm: " + algorithm_name).c_str());
 
+    // Initialize OpenSSL
+    OpenSSL_add_all_digests();
+
+    // Get the digest
+    const EVP_MD* md = EVP_get_digestbyname(algorithm_name.c_str());
+    if (!md) {
+        std::string available_algorithms = get_available_algorithms();
+        dpm_log(LOG_FATAL, ("Hash algorithm not supported: " + algorithm_name +
+                ". Available algorithms: " + available_algorithms).c_str());
+        return "";
+    }
+
     // Initialize OpenSSL EVP context
     EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
     if (!mdctx) {
@@ -65,20 +102,15 @@ std::string generate_file_checksum(const std::filesystem::path& file_path)
         return "";
     }
 
-    // Let OpenSSL look up the algorithm by name
-    const EVP_MD* md = EVP_get_digestbyname(algorithm_name.c_str());
-    if (!md) {
-        std::string available_algorithms = get_available_algorithms();
-        std::string error_msg = "Hash algorithm not supported by OpenSSL: " + algorithm_name +
-                     ". Please check your cryptography.checksum_algorithm configuration.\n" +
-                     "Available algorithms: " + available_algorithms;
-        dpm_log(LOG_FATAL, error_msg.c_str());
+    if (EVP_DigestInit_ex(mdctx, md, nullptr) != 1) {
+        dpm_log(LOG_ERROR, "Failed to initialize digest context");
         EVP_MD_CTX_free(mdctx);
         return "";
     }
 
-    if (EVP_DigestInit_ex(mdctx, md, nullptr) != 1) {
-        dpm_log(LOG_ERROR, "Failed to initialize digest context");
+    // Check if the file exists
+    if (!std::filesystem::exists(file_path)) {
+        dpm_log(LOG_ERROR, ("File does not exist: " + file_path.string()).c_str());
         EVP_MD_CTX_free(mdctx);
         return "";
     }
