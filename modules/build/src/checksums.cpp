@@ -13,7 +13,6 @@
 
 #include "checksums.hpp"
 
-
 std::string get_configured_hash_algorithm()
 {
     const char* algorithm = dpm_get_config("cryptography", "checksum_algorithm");

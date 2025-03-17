@@ -1,5 +1,73 @@
 #include "commands.hpp"
 
+static int refresh_package_manifest(const std::string& stage_dir, bool force) {
+    dpm_log(LOG_INFO, ("Refreshing package manifest for: " + stage_dir).c_str());
+    return 0;
+}
+
+static int generate_package_manifest(const std::string& stage_dir, bool force) {
+    dpm_log(LOG_INFO, ("Generating package manifest for: " + stage_dir).c_str());
+    return 0;
+}
+
+int cmd_manifest(int argc, char** argv) {
+    // Parse command line options
+    bool force = false;
+    bool refresh_only = false;
+    bool verbose = false;
+    bool show_help = false;
+    std::string stage_dir = "";
+
+    // Process command-line arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "-f" || arg == "--force") {
+            force = true;
+        } else if (arg == "-r" || arg == "--refresh-only") {
+            refresh_only = true;
+        } else if (arg == "-v" || arg == "--verbose") {
+            verbose = true;
+        } else if (arg == "-h" || arg == "--help" || "help" ) {
+            show_help = true;
+        } else if ((arg == "-s" || arg == "--stage") && i + 1 < argc) {
+            stage_dir = argv[i + 1];
+            i++; // Skip the next argument
+        }
+    }
+
+    // If help was requested, show it and return
+    if (show_help) {
+        return cmd_manifest_help(argc, argv);
+    }
+
+    // Validate that stage directory is provided
+    if (stage_dir.empty()) {
+        dpm_log(LOG_ERROR, "Stage directory is required (--stage/-s)");
+        return cmd_manifest_help(argc, argv);
+    }
+
+    // Expand path if needed
+    stage_dir = expand_path(stage_dir);
+
+    // Check if stage directory exists
+    if (!std::filesystem::exists(stage_dir)) {
+        dpm_log(LOG_ERROR, ("Stage directory does not exist: " + stage_dir).c_str());
+        return 1;
+    }
+
+    // Set verbose logging if requested
+    if (verbose) {
+        dpm_set_logging_level(LOG_DEBUG);
+    }
+
+    // Log the operation being performed
+    if (refresh_only) {
+        return refresh_package_manifest(stage_dir, force);
+    } else {
+        return generate_package_manifest(stage_dir, force);
+    }
+}
 
 int cmd_stage(int argc, char** argv) {
     // Announce that the stage step is being executed (debug level)
@@ -81,6 +149,7 @@ int cmd_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Available commands:");
     dpm_log(LOG_INFO, "  stage      - Stage a new DPM package directory");
+    dpm_log(LOG_INFO, "  manifest   - Generate or refresh package manifest");
     dpm_log(LOG_INFO, "  help       - Display this help message");
     dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Usage: dpm build <command>");
@@ -113,5 +182,18 @@ int cmd_stage_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "  -f, --force                Force package staging even if warnings occur");
     dpm_log(LOG_INFO, "  -v, --verbose              Enable verbose output");
     dpm_log(LOG_INFO, "  -h, --help                 Display this help message");
+    return 0;
+}
+
+int cmd_manifest_help(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Usage: dpm build manifest [options]");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Options:");
+    dpm_log(LOG_INFO, "  -s, --stage DIR           Stage directory path (required)");
+    dpm_log(LOG_INFO, "  -r, --refresh-only        Refresh existing manifest instead of generating a new one");
+    dpm_log(LOG_INFO, "  -f, --force               Force manifest operation even if warnings occur");
+    dpm_log(LOG_INFO, "  -v, --verbose             Enable verbose output");
+    dpm_log(LOG_INFO, "  -h, --help                Display this help message");
+    dpm_log(LOG_INFO, "");
     return 0;
 }
