@@ -5,18 +5,35 @@ static int refresh_package_manifest(const std::string& stage_dir, bool force) {
     return 0;
 }
 
-static int generate_package_manifest(const std::string& stage_dir, bool force) {
-    dpm_log(LOG_INFO, ("Generating package manifest for: " + stage_dir).c_str());
+static int generate_package_manifest(
+    const std::string& package_dir,
+    const std::string& package_name,
+    const std::string& package_version,
+    const std::string& architecture,
+    bool force
+) {
+    dpm_log(LOG_INFO, ("Generating package manifest for: " + package_dir).c_str());
+
+    // Generate the metadata files using the provided information
+    if (!metadata_generate_new(std::filesystem::path(package_dir), package_name, package_version, architecture)) {
+        dpm_log(LOG_ERROR, "Failed to generate metadata.");
+        return 1;
+    }
+
+    dpm_log(LOG_INFO, "Package content manifest generated successfully.");
     return 0;
 }
 
 int cmd_manifest(int argc, char** argv) {
     // Parse command line options
     bool force = false;
-    bool refresh_only = false;
+    bool replace = false;
     bool verbose = false;
     bool show_help = false;
-    std::string stage_dir = "";
+    std::string package_dir = "";
+    std::string package_name = "";
+    std::string package_version = "";
+    std::string architecture = "";
 
     // Process command-line arguments
     for (int i = 1; i < argc; i++) {
@@ -24,14 +41,23 @@ int cmd_manifest(int argc, char** argv) {
 
         if (arg == "-f" || arg == "--force") {
             force = true;
-        } else if (arg == "-r" || arg == "--refresh-only") {
-            refresh_only = true;
+        } else if (arg == "-r" || arg == "--replace") {
+            replace = true;
         } else if (arg == "-v" || arg == "--verbose") {
             verbose = true;
-        } else if (arg == "-h" || arg == "--help" || "help" ) {
+        } else if (arg == "-h" || arg == "--help" || arg == "help") {
             show_help = true;
-        } else if ((arg == "-s" || arg == "--stage") && i + 1 < argc) {
-            stage_dir = argv[i + 1];
+        } else if ((arg == "-p" || arg == "--package-dir") && i + 1 < argc) {
+            package_dir = argv[i + 1];
+            i++; // Skip the next argument
+        } else if ((arg == "-n" || arg == "--name") && i + 1 < argc) {
+            package_name = argv[i + 1];
+            i++; // Skip the next argument
+        } else if ((arg == "-V" || arg == "--version") && i + 1 < argc) {
+            package_version = argv[i + 1];
+            i++; // Skip the next argument
+        } else if ((arg == "-a" || arg == "--architecture") && i + 1 < argc) {
+            architecture = argv[i + 1];
             i++; // Skip the next argument
         }
     }
@@ -41,18 +67,18 @@ int cmd_manifest(int argc, char** argv) {
         return cmd_manifest_help(argc, argv);
     }
 
-    // Validate that stage directory is provided
-    if (stage_dir.empty()) {
-        dpm_log(LOG_ERROR, "Stage directory is required (--stage/-s)");
+    // Validate that package directory is provided
+    if (package_dir.empty()) {
+        dpm_log(LOG_ERROR, "Package directory is required (--package-dir/-p)");
         return cmd_manifest_help(argc, argv);
     }
 
     // Expand path if needed
-    stage_dir = expand_path(stage_dir);
+    package_dir = expand_path(package_dir);
 
-    // Check if stage directory exists
-    if (!std::filesystem::exists(stage_dir)) {
-        dpm_log(LOG_ERROR, ("Stage directory does not exist: " + stage_dir).c_str());
+    // Check if package directory exists
+    if (!std::filesystem::exists(package_dir)) {
+        dpm_log(LOG_ERROR, ("Package directory does not exist: " + package_dir).c_str());
         return 1;
     }
 
@@ -62,10 +88,16 @@ int cmd_manifest(int argc, char** argv) {
     }
 
     // Log the operation being performed
-    if (refresh_only) {
-        return refresh_package_manifest(stage_dir, force);
+    if (replace) {
+        // When replacing a manifest, we need name, version, and architecture
+        if (package_name.empty() || package_version.empty() || architecture.empty()) {
+            dpm_log(LOG_ERROR, "Package name, version, and architecture are required for replacing a manifest");
+            return cmd_manifest_help(argc, argv);
+        }
+
+        return generate_package_manifest(package_dir, package_name, package_version, architecture, force);
     } else {
-        return generate_package_manifest(stage_dir, force);
+        return refresh_package_manifest(package_dir, force);
     }
 }
 
@@ -168,6 +200,23 @@ int cmd_unknown(const char* command, int argc, char** argv) {
 }
 
 
+int cmd_manifest_help(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Usage: dpm build manifest [options]");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Options:");
+    dpm_log(LOG_INFO, "  -p, --package-dir DIR     Package directory path (required)");
+    dpm_log(LOG_INFO, "  -n, --name NAME           Package name (required when replacing)");
+    dpm_log(LOG_INFO, "  -V, --version VERSION     Package version (required when replacing)");
+    dpm_log(LOG_INFO, "  -a, --architecture ARCH   Package architecture (required when replacing)");
+    dpm_log(LOG_INFO, "  -r, --replace             Replace manifest with new one (default: refresh existing)");
+    dpm_log(LOG_INFO, "  -f, --force               Force manifest operation even if warnings occur");
+    dpm_log(LOG_INFO, "  -v, --verbose             Enable verbose output");
+    dpm_log(LOG_INFO, "  -h, --help                Display this help message");
+    dpm_log(LOG_INFO, "");
+    return 0;
+}
+
+
 int cmd_stage_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "Usage: dpm build stage [options]");
     dpm_log(LOG_INFO, "");
@@ -182,18 +231,5 @@ int cmd_stage_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "  -f, --force                Force package staging even if warnings occur");
     dpm_log(LOG_INFO, "  -v, --verbose              Enable verbose output");
     dpm_log(LOG_INFO, "  -h, --help                 Display this help message");
-    return 0;
-}
-
-int cmd_manifest_help(int argc, char** argv) {
-    dpm_log(LOG_INFO, "Usage: dpm build manifest [options]");
-    dpm_log(LOG_INFO, "");
-    dpm_log(LOG_INFO, "Options:");
-    dpm_log(LOG_INFO, "  -s, --stage DIR           Stage directory path (required)");
-    dpm_log(LOG_INFO, "  -r, --refresh-only        Refresh existing manifest instead of generating a new one");
-    dpm_log(LOG_INFO, "  -f, --force               Force manifest operation even if warnings occur");
-    dpm_log(LOG_INFO, "  -v, --verbose             Enable verbose output");
-    dpm_log(LOG_INFO, "  -h, --help                Display this help message");
-    dpm_log(LOG_INFO, "");
     return 0;
 }

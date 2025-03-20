@@ -20,6 +20,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include "checksums.hpp"
+#include "metadata.hpp"
 
 /**
  * @brief Stages a DPM package

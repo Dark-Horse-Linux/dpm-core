@@ -21,6 +21,7 @@ add_library(build MODULE
         src/commands.cpp
         src/package_staging.cpp
         src/checksums.cpp
+        src/metadata.cpp
 )
 
 # Set output properties
@@ -48,6 +49,7 @@ add_executable(build_standalone
         src/commands.cpp
         src/package_staging.cpp
         src/checksums.cpp
+        src/metadata.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build
