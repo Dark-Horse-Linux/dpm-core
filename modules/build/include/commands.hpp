@@ -4,6 +4,8 @@
 #include <dpmdk/include/CommonModuleAPI.hpp>
 #include <filesystem>
 #include "package_staging.hpp"
+#include <map>
+#include <sstream>
 
 /**
  * @brief Handler for the stage command

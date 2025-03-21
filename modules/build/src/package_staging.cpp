@@ -307,7 +307,7 @@ int build_package_stage(
     }
 
     // Update the contents manifest
-    if (!update_contents_manifest(package_dir))
+    if (!generate_contents_manifest(package_dir))
     {
         return 1;
     }

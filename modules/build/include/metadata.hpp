@@ -32,7 +32,7 @@
  * @param package_dir Root directory of the package stage
  * @return true if contents manifest generation was successful, false otherwise
  */
-bool update_contents_manifest(const std::filesystem::path& package_dir);
+bool generate_contents_manifest(const std::filesystem::path& package_dir);
 
 /**
  * @brief Generates basic metadata files for a package stage

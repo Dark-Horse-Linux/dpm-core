@@ -72,7 +72,7 @@ bool metadata_generate_new(
         dpm_log(LOG_INFO, "Created metadata files");
 
         // Update the contents manifest
-        if (!update_contents_manifest(package_dir)) {
+        if (!generate_contents_manifest(package_dir)) {
             dpm_log(LOG_ERROR, "Failed to update contents manifest");
             return false;
         }
@@ -94,7 +94,7 @@ bool metadata_generate_new(
  * @param package_dir Root directory of the package being staged
  * @return true if manifest generation was successful, false otherwise
  */
-bool update_contents_manifest(const std::filesystem::path& package_dir)
+bool generate_contents_manifest(const std::filesystem::path& package_dir)
 {
     try {
         std::filesystem::path contents_dir = package_dir / "contents";
@@ -174,7 +174,6 @@ bool update_contents_manifest(const std::filesystem::path& package_dir)
         }
 
         manifest_file.close();
-        dpm_log(LOG_INFO, "Contents manifest generated successfully");
         return true;
     }
     catch (const std::exception& e) {
@@ -182,3 +181,5 @@ bool update_contents_manifest(const std::filesystem::path& package_dir)
         return false;
     }
 }
+
+
