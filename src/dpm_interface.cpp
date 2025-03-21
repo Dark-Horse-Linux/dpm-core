@@ -72,9 +72,7 @@ int main_check_module_path(const ModuleLoader& loader)
     return 0;
 }
 
-
-int main_list_modules(const ModuleLoader& loader)
-{
+int main_list_modules(const ModuleLoader& loader) {
     // initialize an empty modules list
     std::vector<std::string> modules;
 
@@ -83,7 +81,7 @@ int main_list_modules(const ModuleLoader& loader)
 
     // set the module path
     DPMErrorCategory get_path_error = loader.get_module_path(path);
-    if ( get_path_error != DPMErrorCategory::SUCCESS ) {
+    if (get_path_error != DPMErrorCategory::SUCCESS) {
         g_logger.log(LoggingLevels::FATAL, "Failed to get modules.modules_path");
         return 1;
     }
@@ -116,8 +114,8 @@ int main_list_modules(const ModuleLoader& loader)
         dlclose(handle);
     }
 
-    if ( valid_modules.empty() ) {
-        g_logger.log(LoggingLevels::FATAL, "No valid modules found in modules.modules_path: '" + path + "'.");
+    if (valid_modules.empty()) {
+        g_logger.log(LoggingLevels::FATAL, "No valid DPM commands available.");
         return 0;
     }
 
@@ -154,9 +152,11 @@ int main_list_modules(const ModuleLoader& loader)
 
     const int column_spacing = 4;
 
+    // Print header with proper spacing
+    std::cout << "Available DPM commands:\n" << std::endl;
+
     // Display the table header
-    g_logger.log(LoggingLevels::DEBUG, "\nAvailable modules in modules.modules_path: '" + path + "':\n");
-    std::cout << std::left << std::setw(max_name_length + column_spacing) << "MODULE"
+    std::cout << std::left << std::setw(max_name_length + column_spacing) << "COMMAND"
               << std::setw(max_version_length + column_spacing) << "VERSION"
               << "DESCRIPTION" << std::endl;
 
@@ -166,6 +166,11 @@ int main_list_modules(const ModuleLoader& loader)
                   << std::setw(max_version_length + column_spacing) << versions[i]
                   << descriptions[i] << std::endl;
     }
+
+    // Add a blank line before the usage note
+    std::cout << std::endl;
+    std::cout << "Use 'dpm <command> help' for detailed information about a specific command." << std::endl;
+    std::cout << std::endl;
 
     return 0;
 }
