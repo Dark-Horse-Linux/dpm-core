@@ -1,5 +1,5 @@
 /**
-* @file package_staging.hpp
+* @file staging.hpp
  * @brief Functions for staging DPM packages
  *
  * Defines functions for creating and manipulating DPM package staging structures.

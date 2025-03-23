@@ -395,12 +395,103 @@ int cmd_stage(int argc, char** argv) {
     );
 }
 
+int cmd_sign(int argc, char** argv) {
+    // Parse command line options
+    std::string key_id = "";
+    std::string stage_dir = "";
+    std::string package_path = "";
+    bool force = false;
+    bool verbose = false;
+    bool show_help = false;
+
+    // Process command-line arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "-k" || arg == "--key-id") {
+            if (i + 1 < argc) {
+                key_id = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-s" || arg == "--stage") {
+            if (i + 1 < argc) {
+                stage_dir = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-p" || arg == "--package") {
+            if (i + 1 < argc) {
+                package_path = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-f" || arg == "--force") {
+            force = true;
+        } else if (arg == "-v" || arg == "--verbose") {
+            verbose = true;
+        } else if (arg == "-h" || arg == "--help" || arg == "help") {
+            show_help = true;
+        }
+    }
+
+    // If help was requested, show it and return
+    if (show_help) {
+        return cmd_sign_help(argc, argv);
+    }
+
+    // Set verbose logging if requested
+    if (verbose) {
+        dpm_set_logging_level(LOG_DEBUG);
+    }
+
+    // Validate that key ID is provided
+    if (key_id.empty()) {
+        dpm_log(LOG_ERROR, "GPG key ID is required (--key-id/-k)");
+        return cmd_sign_help(argc, argv);
+    }
+
+    // Validate that either stage or package is provided, but not both
+    if (stage_dir.empty() && package_path.empty()) {
+        dpm_log(LOG_ERROR, "Either a package stage directory (--stage/-s) or a package file (--package/-p) must be specified");
+        return cmd_sign_help(argc, argv);
+    }
+
+    if (!stage_dir.empty() && !package_path.empty()) {
+        dpm_log(LOG_ERROR, "Cannot specify both package stage directory (--stage/-s) and package file (--package/-p)");
+        return cmd_sign_help(argc, argv);
+    }
+
+    // Expand paths if needed
+    if (!stage_dir.empty()) {
+        stage_dir = expand_path(stage_dir);
+        // Check if stage directory exists
+        if (!std::filesystem::exists(stage_dir)) {
+            dpm_log(LOG_ERROR, ("Stage directory does not exist: " + stage_dir).c_str());
+            return 1;
+        }
+
+        // Sign the stage directory
+        return sign_stage_directory(stage_dir, key_id, force);
+    } else {
+        package_path = expand_path(package_path);
+        // Check if package file exists
+        if (!std::filesystem::exists(package_path)) {
+            dpm_log(LOG_ERROR, ("Package file does not exist: " + package_path).c_str());
+            return 1;
+        }
+
+        // Sign the package file
+        return sign_package_file(package_path, key_id, force);
+    }
+}
+
 int cmd_help(int argc, char** argv) {
-    dpm_log(LOG_INFO, "DPM Build Module - Creates DPM packages according to specification.");
+    dpm_log(LOG_INFO, "DPM Build Module - Creates DPM packages.");
     dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Available commands:");
     dpm_log(LOG_INFO, "  stage      - Stage a new DPM package directory");
     dpm_log(LOG_INFO, "  manifest   - Generate or refresh package manifest");
+    dpm_log(LOG_INFO, "  sign       - Sign a package or package stage directory");
+    dpm_log(LOG_INFO, "  seal       - Seal a package stage directory into final format");
+    dpm_log(LOG_INFO, "  unseal     - Unseal a package back to stage format");
     dpm_log(LOG_INFO, "  help       - Display this help message");
     dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Usage: dpm build <command>");
@@ -445,5 +536,228 @@ int cmd_stage_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "  -f, --force                Force package staging even if warnings occur");
     dpm_log(LOG_INFO, "  -v, --verbose              Enable verbose output");
     dpm_log(LOG_INFO, "  -h, --help                 Display this help message");
+    return 0;
+}
+
+int cmd_sign_help(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Usage: dpm build sign [options]");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Sign a DPM package or package stage directory using GPG.");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Options:");
+    dpm_log(LOG_INFO, "  -k, --key-id ID          GPG key ID or email to use for signing (required)");
+    dpm_log(LOG_INFO, "  -s, --stage DIR          Package stage directory to sign");
+    dpm_log(LOG_INFO, "  -p, --package FILE       Package file to sign");
+    dpm_log(LOG_INFO, "  -f, --force              Force signing even if warnings occur");
+    dpm_log(LOG_INFO, "  -v, --verbose            Enable verbose output");
+    dpm_log(LOG_INFO, "  -h, --help               Display this help message");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Either --stage or --package must be specified, but not both.");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Examples:");
+    dpm_log(LOG_INFO, "  dpm build sign --key-id=\"user@example.com\" --stage=./my-package-1.0.x86_64");
+    dpm_log(LOG_INFO, "  dpm build sign --key-id=\"AB123CD456\" --package=./my-package-1.0.x86_64.dpm");
+    return 0;
+}
+
+
+int cmd_unseal(int argc, char** argv) {
+    // Parse command line options
+    std::string input_path = "";
+    std::string output_dir = "";
+    bool components_mode = false;
+    bool force = false;
+    bool verbose = false;
+    bool show_help = false;
+
+    // Process command-line arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "-i" || arg == "--input") {
+            if (i + 1 < argc) {
+                input_path = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-o" || arg == "--output") {
+            if (i + 1 < argc) {
+                output_dir = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-c" || arg == "--components") {
+            components_mode = true;
+        } else if (arg == "-f" || arg == "--force") {
+            force = true;
+        } else if (arg == "-v" || arg == "--verbose") {
+            verbose = true;
+        } else if (arg == "-h" || arg == "--help" || arg == "help") {
+            show_help = true;
+        }
+    }
+
+    // If help was requested, show it and return
+    if (show_help) {
+        return cmd_unseal_help(argc, argv);
+    }
+
+    // Validate that input path is provided
+    if (input_path.empty()) {
+        dpm_log(LOG_ERROR, "Input path is required (--input/-i)");
+        return cmd_unseal_help(argc, argv);
+    }
+
+    // Check for invalid option combinations
+    if (components_mode && !output_dir.empty()) {
+        dpm_log(LOG_ERROR, "Output directory (-o/--output) cannot be specified in components mode (-c/--components)");
+        return cmd_unseal_help(argc, argv);
+    }
+
+    // Expand path if needed
+    input_path = expand_path(input_path);
+
+    // Check if input path exists
+    if (!std::filesystem::exists(input_path)) {
+        dpm_log(LOG_ERROR, ("Input path does not exist: " + input_path).c_str());
+        return 1;
+    }
+
+    // Set verbose logging if requested
+    if (verbose) {
+        dpm_set_logging_level(LOG_DEBUG);
+    }
+
+    // Determine which operation to perform based on components_mode flag
+    if (components_mode) {
+        // We're unsealing components of a stage directory
+        if (!std::filesystem::is_directory(input_path)) {
+            dpm_log(LOG_ERROR, ("Input path must be a directory in components mode: " + input_path).c_str());
+            return 1;
+        }
+
+        // Call unseal_stage_components with just the input path
+        return unseal_stage_components(input_path);
+    } else {
+        // We're unsealing a package file
+        if (std::filesystem::is_directory(input_path)) {
+            dpm_log(LOG_ERROR, ("Input path must be a file when not in components mode: " + input_path).c_str());
+            return 1;
+        }
+
+        // Call unseal_package
+        return unseal_package(input_path, output_dir, force);
+    }
+}
+
+int cmd_unseal_help(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Usage: dpm build unseal [options]");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Unseals a DPM package file or package stage components.");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Options:");
+    dpm_log(LOG_INFO, "  -i, --input PATH       Path to package file or stage directory (required)");
+    dpm_log(LOG_INFO, "  -o, --output DIR       Directory to extract package to (optional, package mode only)");
+    dpm_log(LOG_INFO, "  -c, --components       Component mode: unseal components in a stage directory");
+    dpm_log(LOG_INFO, "                         Without this flag, input is treated as a package file");
+    dpm_log(LOG_INFO, "  -f, --force            Force unsealing even if warnings occur or directory exists");
+    dpm_log(LOG_INFO, "  -v, --verbose          Enable verbose output");
+    dpm_log(LOG_INFO, "  -h, --help             Display this help message");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Examples:");
+    dpm_log(LOG_INFO, "  # Unseal a package file to a directory:");
+    dpm_log(LOG_INFO, "  dpm build unseal --input=./my-package-1.0.x86_64.dpm");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "  # Unseal a package file to a specific directory:");
+    dpm_log(LOG_INFO, "  dpm build unseal --input=./my-package-1.0.x86_64.dpm --output=./extract");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "  # Unseal components in a stage directory:");
+    dpm_log(LOG_INFO, "  dpm build unseal --input=./my-package-1.0.x86_64 --components");
+    return 0;
+}
+
+int cmd_seal(int argc, char** argv) {
+    // Parse command line options
+    std::string stage_dir = "";
+    std::string output_dir = "";
+    bool force = false;
+    bool verbose = false;
+    bool finalize = false;
+    bool show_help = false;
+
+    // Process command-line arguments
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "-s" || arg == "--stage") {
+            if (i + 1 < argc) {
+                stage_dir = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-o" || arg == "--output") {
+            if (i + 1 < argc) {
+                output_dir = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-f" || arg == "--force") {
+            force = true;
+        } else if (arg == "-z" || arg == "--finalize") {
+            finalize = true;
+        } else if (arg == "-v" || arg == "--verbose") {
+            verbose = true;
+        } else if (arg == "-h" || arg == "--help" || arg == "help") {
+            show_help = true;
+        }
+    }
+
+    // If help was requested, show it and return
+    if (show_help) {
+        return cmd_seal_help(argc, argv);
+    }
+
+    // Validate that stage directory is provided
+    if (stage_dir.empty()) {
+        dpm_log(LOG_ERROR, "Stage directory is required (--stage/-s)");
+        return cmd_seal_help(argc, argv);
+    }
+
+    // Expand path if needed
+    stage_dir = expand_path(stage_dir);
+
+    // Check if stage directory exists
+    if (!std::filesystem::exists(stage_dir)) {
+        dpm_log(LOG_ERROR, ("Stage directory does not exist: " + stage_dir).c_str());
+        return 1;
+    }
+
+    // Set verbose logging if requested
+    if (verbose) {
+        dpm_set_logging_level(LOG_DEBUG);
+    }
+
+    // Call the appropriate sealing function based on the finalize flag
+    if (finalize) {
+        return seal_final_package(stage_dir, output_dir, force);
+    } else {
+        return seal_stage_components(stage_dir, force);
+    }
+}
+
+int cmd_seal_help(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Usage: dpm build seal [options]");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Seals a package stage directory by replacing contents, metadata,");
+    dpm_log(LOG_INFO, "hooks, and signatures directories with gzipped tarballs.");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Options:");
+    dpm_log(LOG_INFO, "  -s, --stage DIR         Package stage directory to seal (required)");
+    dpm_log(LOG_INFO, "  -o, --output DIR        Output directory for the finalized package (optional)");
+    dpm_log(LOG_INFO, "  -f, --force             Force sealing even if warnings occur");
+    dpm_log(LOG_INFO, "  -z, --finalize          Also compress the entire stage as a final package");
+    dpm_log(LOG_INFO, "  -v, --verbose           Enable verbose output");
+    dpm_log(LOG_INFO, "  -h, --help              Display this help message");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Examples:");
+    dpm_log(LOG_INFO, "  dpm build seal --stage=./my-package-1.0.x86_64");
+    dpm_log(LOG_INFO, "  dpm build seal --stage=./my-package-1.0.x86_64 --finalize");
+    dpm_log(LOG_INFO, "  dpm build seal --stage=./my-package-1.0.x86_64 --finalize --output=/tmp");
     return 0;
 }

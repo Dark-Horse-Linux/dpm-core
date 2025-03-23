@@ -79,6 +79,7 @@ extern "C" const char* dpm_get_description(void) {
  * @param argv Array of argument strings
  * @return 0 on success, non-zero on failure
  */
+// In build.cpp, update the dpm_module_execute function
 extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
     // Parse the command
     Command cmd = parse_command(command);
@@ -93,6 +94,15 @@ extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
 
         case CMD_MANIFEST:
             return cmd_manifest(argc, argv);
+
+        case CMD_SIGN:
+            return cmd_sign(argc, argv);
+
+        case CMD_SEAL:
+            return cmd_seal(argc, argv);
+
+        case CMD_UNSEAL:
+            return cmd_unseal(argc, argv);
 
         case CMD_UNKNOWN:
             default:

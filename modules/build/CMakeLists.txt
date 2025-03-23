@@ -13,15 +13,20 @@ endif()
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
 
+# Find LibArchive
+find_package(LibArchive REQUIRED)
+
 # Module version - used by DPM
 add_library(build MODULE
         build.cpp
         src/helpers.cpp
         src/cli_parsers.cpp
         src/commands.cpp
-        src/package_staging.cpp
+        src/staging.cpp
+        src/signing.cpp
         src/checksums.cpp
         src/metadata.cpp
+        src/sealing.cpp
 )
 
 # Set output properties
@@ -36,10 +41,11 @@ target_include_directories(build PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${DPM_ROOT_DIR}
         ${OPENSSL_INCLUDE_DIR}
+        ${LibArchive_INCLUDE_DIRS}
 )
 
 # Link with filesystem library and OpenSSL
-target_link_libraries(build stdc++fs ${OPENSSL_LIBRARIES})
+target_link_libraries(build stdc++fs ${OPENSSL_LIBRARIES} ${LibArchive_LIBRARIES})
 
 # Standalone version - used for debugging
 add_executable(build_standalone
@@ -47,9 +53,11 @@ add_executable(build_standalone
         src/helpers.cpp
         src/cli_parsers.cpp
         src/commands.cpp
-        src/package_staging.cpp
+        src/staging.cpp
+        src/signing.cpp
         src/checksums.cpp
         src/metadata.cpp
+        src/sealing.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build
@@ -60,10 +68,11 @@ target_include_directories(build_standalone PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${DPM_ROOT_DIR}
         ${OPENSSL_INCLUDE_DIR}
+        ${LibArchive_INCLUDE_DIRS}
 )
 
 # Link with filesystem library and OpenSSL for standalone
-target_link_libraries(build_standalone stdc++fs ${OPENSSL_LIBRARIES})
+target_link_libraries(build_standalone stdc++fs ${OPENSSL_LIBRARIES} ${LibArchive_LIBRARIES})
 
 # Set the output name for the standalone executable
 set_target_properties(

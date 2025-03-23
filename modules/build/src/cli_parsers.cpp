@@ -237,9 +237,24 @@ Command parse_command(const char* cmd_str) {
         return CMD_STAGE;
     }
 
-    // Check for stage command, including when it has additional arguments
+    // Check for manifest command, including when it has additional arguments
     if (strncmp(cmd_str, "manifest", 8) == 0) {
         return CMD_MANIFEST;
+    }
+
+    // Check for sign command, including when it has additional arguments
+    if (strncmp(cmd_str, "sign", 4) == 0) {
+        return CMD_SIGN;
+    }
+
+    // Check for seal command, including when it has additional arguments
+    if (strncmp(cmd_str, "seal", 4) == 0) {
+        return CMD_SEAL;
+    }
+
+    // Check for unseal command, including when it has additional arguments
+    if (strncmp(cmd_str, "unseal", 6) == 0) {
+        return CMD_UNSEAL;
     }
 
     // Check if cmd_str is a help option

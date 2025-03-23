@@ -10,7 +10,7 @@
  * Part of the Dark Horse Linux Package Manager (DPM)
  */
 
-#include "package_staging.hpp"
+#include "staging.hpp"
 
 // generates a directory for the stage according to naming convention
 std::filesystem::path stage_determine_rootdir_path(
