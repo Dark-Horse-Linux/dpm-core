@@ -57,12 +57,12 @@ int seal_final_package(const std::string &stage_dir, const std::string &output_d
  * Extracts a sealed package file back to its original stage directory structure
  * by expanding the gzipped tarballs.
  *
- * @param package_path Path to the sealed package file
+ * @param package_filepath Path to the sealed package file
  * @param output_dir Path to extract the package stage to
  * @param force Whether to force the operation even if warnings occur
  * @return 0 on success, non-zero on failure
  */
-int unseal_package(const std::string& package_path, const std::string& output_dir, bool force);
+int unseal_package(const std::string& package_filepath, const std::string& output_dir, bool force);
 
 
 /**

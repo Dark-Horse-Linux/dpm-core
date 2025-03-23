@@ -500,11 +500,13 @@ int seal_final_package(const std::string &stage_dir, const std::string &output_d
         // the user supplied an output directory so call it stage_name.dpm and prefix the path
         // with the output dir
         std::string stage_basename = stage_path.filename().string();
-        output_path = output_dir + stage_basename + ".dpm";
+
+        // it's here
+        output_path = std::filesystem::path(output_dir) / std::filesystem::path(stage_basename + ".dpm");
     }
 
     dpm_log( LOG_INFO, "Sealing DPM Package." );
-    bool result = compress_directory( stage_path, output_path.string() );
+    bool result = compress_directory( stage_path.string(), output_path.string() );
     if ( ! result ) {
         dpm_log( LOG_FATAL, "Could not create DPM package from stage." );
         return 1;
@@ -513,46 +515,52 @@ int seal_final_package(const std::string &stage_dir, const std::string &output_d
     return 0;
 }
 
-int unseal_package(const std::string& package_path, const std::string& output_dir_arg, bool force)
+int unseal_package(const std::string& package_filepath, const std::string& output_dir, bool force)
 {
-    dpm_log(LOG_INFO, ("Unsealing package: " + package_path).c_str());
+    dpm_log(LOG_INFO, ("Unsealing package: " + package_filepath).c_str());
 
-    // Determine the output directory path
-    std::filesystem::path output_path;
+    // Extract filename from package path
+    std::filesystem::path supplied_package_path(package_filepath);
+    std::string package_filename = supplied_package_path.filename().string();
 
-    if (output_dir_arg.empty()) {
-        // Extract filename from package path
-        std::filesystem::path package_fs_path(package_path);
-        std::string package_name = package_fs_path.filename().string();
-
-        // Verify it has .dpm extension
-        const std::string dpm_extension = ".dpm";
-        if (!package_name.ends_with(dpm_extension)) {
-            dpm_log(LOG_FATAL, "Refusing to unseal package: file must have .dpm extension");
-            return 1;
-        }
-
-        // Remove .dpm extension
-        std::string stage_name = package_name.substr(0, package_name.length() - dpm_extension.length());
-
-        // Set output path to parent_directory/filename_without_extension
-        output_path = package_fs_path.parent_path() / stage_name;
-    } else {
-        // Use the provided output directory
-        output_path = std::filesystem::path(output_dir_arg);
+    // Verify it has .dpm extension
+    const std::string dpm_extension = ".dpm";
+    if (!package_filename.ends_with(dpm_extension)) {
+        dpm_log(LOG_FATAL, "Refusing to unseal package: file must have .dpm extension");
+        return 1;
     }
 
-    // Check if output directory already exists
-    if (std::filesystem::exists(output_path)) {
+    // Remove .dpm extension to establish the tatget stage directory to extract to
+    std::string target_stage_name = package_filename.substr(0, package_filename.length() - dpm_extension.length());
+
+    // Determine the output directory path based on whether output_dir was supplied or not
+    std::filesystem::path output_directory;
+
+    if (output_dir.empty()) {
+        // output_dir was not supplied, so set it to the supplied package path's parent dir + target_stage_name
+
+        // Set output path to parent_directory/filename_without_extension
+        output_directory = supplied_package_path.parent_path() / target_stage_name;
+    } else {
+        // output_dir was supplied, so use that
+
+        // Use the provided output directory
+        output_directory = std::filesystem::path(output_dir) / target_stage_name;
+    }
+
+    // Check if target path already exists
+    if (std::filesystem::exists(output_directory)) {
         if (!force) {
-            dpm_log(LOG_ERROR, ("Output directory already exists: " + output_path.string() +
+            // a stage dir already exists with this name at that path so it can't be used unless --force is used
+            // to overwrite it
+            dpm_log(LOG_ERROR, ("Output directory already exists: " + output_directory.string() +
                 ". Use --force to overwrite.").c_str());
             return 1;
         }
 
         // If force flag is set, remove the existing directory
         try {
-            std::filesystem::remove_all(output_path);
+            std::filesystem::remove_all(output_directory);
         } catch (const std::filesystem::filesystem_error& e) {
             dpm_log(LOG_ERROR, ("Failed to remove existing directory: " + std::string(e.what())).c_str());
             return 1;
@@ -561,20 +569,20 @@ int unseal_package(const std::string& package_path, const std::string& output_di
 
     // Create the output directory
     try {
-        std::filesystem::create_directories(output_path);
+        std::filesystem::create_directories(output_directory);
     } catch (const std::filesystem::filesystem_error& e) {
         dpm_log(LOG_ERROR, ("Failed to create output directory: " + std::string(e.what())).c_str());
         return 1;
     }
 
     // Extract the package to the output directory
-    bool result = uncompress_archive(package_path, output_path.string());
+    bool result = uncompress_archive(package_filepath, output_directory.string());
     if (!result) {
         dpm_log(LOG_ERROR, "Failed to extract package");
         return 1;
     }
 
-    dpm_log(LOG_INFO, ("Package unsealed successfully to: " + output_path.string()).c_str());
+    dpm_log(LOG_INFO, ("Package unsealed successfully to: " + output_directory.string()).c_str());
     return 0;
 }
 

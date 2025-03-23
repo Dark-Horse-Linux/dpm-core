@@ -1,5 +1,3 @@
-// File: signing.cpp
-
 #include "signing.hpp"
 
 /**
@@ -194,8 +192,65 @@ int sign_stage_directory(const std::string& stage_dir, const std::string& key_id
 }
 
 int sign_package_file(const std::string& package_path, const std::string& key_id, bool force) {
-    // This is a placeholder implementation
     dpm_log(LOG_INFO, ("Signing package file: " + package_path).c_str());
-    dpm_log(LOG_ERROR, "Package file signing not yet implemented");
-    return 1;
+
+    // Get the temporary stage path by removing .dpm extension
+    std::string tmp_stage_path = package_path;
+    if (tmp_stage_path.ends_with(".dpm")) {
+        tmp_stage_path = tmp_stage_path.substr(0, tmp_stage_path.length() - 4);
+    }
+
+    // Check if temporary stage path already exists - fail if it does
+    if (std::filesystem::exists(tmp_stage_path)) {
+        dpm_log(LOG_ERROR, ("Temporary stage directory already exists: " + tmp_stage_path).c_str());
+        return 1;
+    }
+
+    // 1. Unseal the package to the stage parent path
+    std::filesystem::path stage_parent_path = std::filesystem::path(tmp_stage_path).parent_path();
+    dpm_log(LOG_INFO, "Unsealing package file...");
+    int result = unseal_package(package_path, stage_parent_path, force);
+    if (result != 0) {
+        dpm_log(LOG_ERROR, "Failed to unseal package file");
+        return result;
+    }
+
+    // 2. Sign the stage directory components
+    dpm_log(LOG_INFO, "Signing package components...");
+    result = sign_stage_directory(tmp_stage_path, key_id, force);
+    if (result != 0) {
+        dpm_log(LOG_ERROR, "Failed to sign package components");
+        return result;
+    }
+
+    std::string backup_path = package_path + ".old";
+
+    // Back up the original package
+    try {
+        std::filesystem::rename(package_path, backup_path);
+    } catch (const std::filesystem::filesystem_error& e) {
+        dpm_log(LOG_ERROR, ("Failed to backup original package: " + std::string(e.what())).c_str());
+        return 1;
+    }
+
+    // 3. Create a new sealed package at the original location
+    dpm_log(LOG_INFO, "Creating signed package file...");
+
+    // seal the package path
+    result = seal_final_package(tmp_stage_path, stage_parent_path.string(), force);
+    if (result != 0) {
+        dpm_log(LOG_ERROR, "Failed to create signed package");
+        return result;
+    }
+
+    // 4. Clean up
+    try {
+        std::filesystem::remove_all(tmp_stage_path);
+        std::filesystem::remove(backup_path);
+    } catch (const std::filesystem::filesystem_error& e) {
+        dpm_log(LOG_WARN, ("Failed to clean up temporary files: " + std::string(e.what())).c_str());
+    }
+
+    dpm_log(LOG_INFO, ("Successfully signed package: " + package_path).c_str());
+    return 0;
 }

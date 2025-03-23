@@ -18,6 +18,7 @@
 #include <gpgme.h>
 #include <dpmdk/include/CommonModuleAPI.hpp>
 #include "helpers.hpp"
+#include "sealing.hpp"
 
 /**
  * @brief Signs a package stage directory
