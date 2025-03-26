@@ -169,3 +169,61 @@ std::string generate_file_checksum(const std::filesystem::path& file_path)
 
     return ss.str();
 }
+
+std::string generate_string_checksum(const std::string& input_string)
+{
+    // Get configured algorithm
+    std::string algorithm_name = get_configured_hash_algorithm();
+
+    // Initialize OpenSSL
+    OpenSSL_add_all_digests();
+
+    // Get the digest
+    const EVP_MD* md = EVP_get_digestbyname(algorithm_name.c_str());
+    if (!md) {
+        std::string available_algorithms = get_available_algorithms();
+        dpm_log(LOG_FATAL, ("Hash algorithm not supported: " + algorithm_name +
+                ". Available algorithms: " + available_algorithms).c_str());
+        return "";
+    }
+
+    // Initialize OpenSSL EVP context
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+    if (!mdctx) {
+        dpm_log(LOG_ERROR, "Failed to create OpenSSL EVP context");
+        return "";
+    }
+
+    if (EVP_DigestInit_ex(mdctx, md, nullptr) != 1) {
+        dpm_log(LOG_ERROR, "Failed to initialize digest context");
+        EVP_MD_CTX_free(mdctx);
+        return "";
+    }
+
+    // Update digest with the string contents
+    if (EVP_DigestUpdate(mdctx, input_string.c_str(), input_string.length()) != 1) {
+        dpm_log(LOG_ERROR, "Failed to update digest");
+        EVP_MD_CTX_free(mdctx);
+        return "";
+    }
+
+    // Finalize the digest
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hash_len = 0;
+
+    if (EVP_DigestFinal_ex(mdctx, hash, &hash_len) != 1) {
+        dpm_log(LOG_ERROR, "Failed to finalize digest");
+        EVP_MD_CTX_free(mdctx);
+        return "";
+    }
+
+    EVP_MD_CTX_free(mdctx);
+
+    // Convert binary hash to hexadecimal string
+    std::stringstream ss;
+    for (unsigned int i = 0; i < hash_len; i++) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
+    }
+
+    return ss.str();
+}

@@ -92,8 +92,8 @@ extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
         case CMD_HELP:
             return cmd_help(argc, argv);
 
-        case CMD_MANIFEST:
-            return cmd_manifest(argc, argv);
+        case CMD_METADATA:
+            return cmd_metadata(argc, argv);
 
         case CMD_SIGN:
             return cmd_sign(argc, argv);

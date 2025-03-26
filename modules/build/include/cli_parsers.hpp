@@ -15,7 +15,7 @@ enum Command {
     CMD_UNKNOWN,     /**< Unknown or unsupported command          */
     CMD_HELP,        /**< Display help information                */
     CMD_STAGE,       /**< Stage a new DPM package                 */
-    CMD_MANIFEST,    /**< Regenerate a stage manifest             */
+    CMD_METADATA,    /**< Regenerate stage metadata               */
     CMD_SIGN,        /**< Sign a package or stage directory       */
     CMD_SEAL,        /**< Seal a package stage directory          */
     CMD_UNSEAL,      /**< Unseal a package stage directory        */

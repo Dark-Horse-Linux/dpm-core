@@ -306,12 +306,6 @@ int build_package_stage(
         return 1;
     }
 
-    // Update the contents manifest
-    if (!generate_contents_manifest(package_dir))
-    {
-        return 1;
-    }
-
     dpm_log(LOG_INFO, "Package staging completed successfully");
     dpm_log(LOG_INFO, ("Package staged at: " + package_dir.string()).c_str());
     dpm_log(LOG_INFO, "Next steps:");

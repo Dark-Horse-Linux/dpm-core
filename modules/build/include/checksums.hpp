@@ -55,3 +55,14 @@ std::string get_available_algorithms();
  * @return String containing the hexadecimal representation of the checksum, or empty string on error
  */
 std::string generate_file_checksum(const std::filesystem::path& file_path);
+
+/**
+ * @brief Generates a checksum of a string using the configured hashing algorithm
+ *
+ * Uses OpenSSL to calculate a cryptographic hash of a string's contents
+ * based on the algorithm specified in the configuration.
+ *
+ * @param input_string The string to be hashed
+ * @return String containing the hexadecimal representation of the checksum, or empty string on error
+ */
+std::string generate_string_checksum(const std::string& input_string);

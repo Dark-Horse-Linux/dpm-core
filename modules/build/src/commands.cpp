@@ -1,261 +1,15 @@
 #include "commands.hpp"
 
-/**
- * @brief Refreshes the contents manifest file by updating checksums
- *
- * Iterates through the existing CONTENTS_MANIFEST_DIGEST file, rereads each file,
- * recalculates its checksum, and updates the file with new checksums while
- * preserving all other fields.
- *
- * @param stage_dir Directory path of the package stage
- * @param force Whether to force the operation even if warnings occur
- * @return 0 on success, non-zero on failure
- */
-static int refresh_contents_manifest(const std::string& stage_dir, bool force) {
-    dpm_log(LOG_INFO, ("Refreshing package manifest for: " + stage_dir).c_str());
-
-    std::filesystem::path package_dir = std::filesystem::path(stage_dir);
-    std::filesystem::path contents_dir = package_dir / "contents";
-    std::filesystem::path manifest_path = package_dir / "metadata" / "CONTENTS_MANIFEST_DIGEST";
-
-    // Check if contents directory exists
-    if (!std::filesystem::exists(contents_dir)) {
-        dpm_log(LOG_ERROR, ("Contents directory does not exist: " + contents_dir.string()).c_str());
-        return 1;
-    }
-
-    // Map to track all files in the contents directory
-    std::map<std::filesystem::path, bool> all_content_files;
-
-    // Populate map with all files in contents directory
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(contents_dir)) {
-        if (!std::filesystem::is_directory(entry)) {
-            // Store path relative to contents directory
-            std::filesystem::path relative_path = std::filesystem::relative(entry.path(), contents_dir);
-            all_content_files[relative_path] = false; // Not processed yet
-        }
-    }
-
-    // Check if manifest file exists
-    bool manifest_exists = std::filesystem::exists(manifest_path);
-
-    // Create a temporary file for the updated manifest
-    std::filesystem::path temp_manifest_path = manifest_path.string() + ".tmp";
-    std::ofstream temp_manifest_file(temp_manifest_path);
-    if (!temp_manifest_file.is_open()) {
-        dpm_log(LOG_ERROR, ("Failed to create temporary manifest file: " + temp_manifest_path.string()).c_str());
-        return 1;
-    }
-
-    // Log which hash algorithm is being used
-    std::string hash_algorithm = get_configured_hash_algorithm();
-    dpm_log(LOG_INFO, ("Refreshing contents manifest using " + hash_algorithm + " checksums...").c_str());
-
-    int updated_files = 0;
-    int new_files = 0;
-
-    // First process existing manifest file if it exists
-    if (manifest_exists) {
-        std::ifstream manifest_file(manifest_path);
-        if (!manifest_file.is_open()) {
-            dpm_log(LOG_ERROR, ("Failed to open manifest file for reading: " + manifest_path.string()).c_str());
-            temp_manifest_file.close();
-            std::filesystem::remove(temp_manifest_path);
-            return 1;
-        }
-
-        std::string line;
-        int line_number = 0;
-
-        // Process each line in the manifest
-        while (std::getline(manifest_file, line)) {
-            line_number++;
-
-            // Skip empty lines
-            if (line.empty()) {
-                temp_manifest_file << line << std::endl;
-                continue;
-            }
-
-            // Parse the line into its components
-            std::istringstream iss(line);
-            char control_designation;
-            std::string checksum, permissions, ownership, file_path;
-
-            // Extract components (C checksum permissions owner:group /path/to/file)
-            iss >> control_designation >> checksum >> permissions >> ownership;
-
-            // The file path might contain spaces, so we need to get the rest of the line
-            std::getline(iss >> std::ws, file_path);
-
-            // Skip if we couldn't parse the line correctly
-            if (file_path.empty()) {
-                dpm_log(LOG_WARN, ("Skipping malformed line " + std::to_string(line_number) + ": " + line).c_str());
-                temp_manifest_file << line << std::endl;
-                continue;
-            }
-
-            // Remove leading slash from file_path if present
-            if (file_path[0] == '/') {
-                file_path = file_path.substr(1);
-            }
-
-            // Mark this file as processed
-            std::filesystem::path relative_path(file_path);
-            if (all_content_files.find(relative_path) != all_content_files.end()) {
-                all_content_files[relative_path] = true; // Mark as processed
-            }
-
-            // Construct the full path to the file in the contents directory
-            std::filesystem::path full_file_path = contents_dir / file_path;
-
-            // Check if the file exists
-            if (!std::filesystem::exists(full_file_path)) {
-                dpm_log(LOG_WARN, ("File not found in contents directory: " + full_file_path.string()).c_str());
-                // Keep the original line
-                temp_manifest_file << control_designation << " "
-                                  << checksum << " "
-                                  << permissions << " "
-                                  << ownership << " "
-                                  << "/" << file_path << std::endl;
-                continue;
-            }
-
-            // Calculate new checksum
-            std::string new_checksum = generate_file_checksum(full_file_path);
-            if (new_checksum.empty()) {
-                dpm_log(LOG_ERROR, ("Failed to generate checksum for: " + full_file_path.string()).c_str());
-                manifest_file.close();
-                temp_manifest_file.close();
-                std::filesystem::remove(temp_manifest_path);
-                return 1;
-            }
-
-            // Write updated line to the temporary file
-            temp_manifest_file << control_designation << " "
-                              << new_checksum << " "
-                              << permissions << " "
-                              << ownership << " "
-                              << "/" << file_path << std::endl;
-
-            // Count updated files (only if checksum actually changed)
-            if (new_checksum != checksum) {
-                updated_files++;
-            }
-        }
-
-        manifest_file.close();
-    }
-
-    // Now process any new files not in the manifest
-    for (const auto& [file_path, processed] : all_content_files) {
-        // Skip if already processed from manifest
-        if (processed) {
-            continue;
-        }
-
-        // This is a new file
-        std::filesystem::path full_file_path = contents_dir / file_path;
-
-        // Get file stats for permissions
-        struct stat file_stat;
-        if (stat(full_file_path.c_str(), &file_stat) != 0) {
-            dpm_log(LOG_ERROR, ("Failed to get file stats for: " + full_file_path.string()).c_str());
-            continue;
-        }
-
-        // Format permissions as octal
-        char perms[5];
-        snprintf(perms, sizeof(perms), "%04o", file_stat.st_mode & 07777);
-
-        // Get owner and group information
-        struct passwd* pw = getpwuid(file_stat.st_uid);
-        struct group* gr = getgrgid(file_stat.st_gid);
-
-        std::string owner;
-        if (pw) {
-            owner = pw->pw_name;
-        } else {
-            owner = std::to_string(file_stat.st_uid);
-        }
-
-        std::string group;
-        if (gr) {
-            group = gr->gr_name;
-        } else {
-            group = std::to_string(file_stat.st_gid);
-        }
-
-        std::string ownership = owner + ":" + group;
-
-        // Calculate checksum
-        std::string checksum = generate_file_checksum(full_file_path);
-        if (checksum.empty()) {
-            dpm_log(LOG_ERROR, ("Failed to generate checksum for: " + full_file_path.string()).c_str());
-            continue;
-        }
-
-        // By default, mark new files as controlled ('C')
-        char control_designation = 'C';
-
-        // Write new line to the temporary file
-        temp_manifest_file << control_designation << " "
-                          << checksum << " "
-                          << perms << " "
-                          << ownership << " "
-                          << "/" << file_path.string() << std::endl;
-
-        new_files++;
-    }
-
-    temp_manifest_file.close();
-
-    // Replace the original file with the temporary file
-    try {
-        std::filesystem::rename(temp_manifest_path, manifest_path);
-    } catch (const std::filesystem::filesystem_error& e) {
-        dpm_log(LOG_ERROR, ("Failed to update manifest file: " + std::string(e.what())).c_str());
-        std::filesystem::remove(temp_manifest_path);
-        return 1;
-    }
-
-    // Log results
-    if (updated_files > 0) {
-        dpm_log(LOG_INFO, ("Updated checksums for " + std::to_string(updated_files) + " existing file(s).").c_str());
-    }
-    if (new_files > 0) {
-        dpm_log(LOG_INFO, ("Added " + std::to_string(new_files) + " new file(s) to manifest.").c_str());
-    }
-
-    return 0;
-}
-
-static int generate_contents_manifest(
-    const std::string& package_dir,
-    const std::string& package_name,
-    const std::string& package_version,
-    const std::string& architecture,
-    bool force
-) {
-    dpm_log(LOG_INFO, ("Generating content manifest for: " + package_dir).c_str());
-
-    // Generate the metadata files using the provided information
-    if (!metadata_generate_new(std::filesystem::path(package_dir), package_name, package_version, architecture)) {
-        dpm_log(LOG_ERROR, "Failed to generate metadata.");
-        return 1;
-    }
-
-    dpm_log(LOG_INFO, "Package content manifest generated successfully.");
-    return 0;
-}
-
-int cmd_manifest(int argc, char** argv) {
+int cmd_metadata(int argc, char** argv) {
     // Parse command line options
     bool force = false;
     bool refresh = false;
     bool verbose = false;
     bool show_help = false;
-    std::string package_dir = "";
+    std::string stage_dir = "";
+    std::string package_name = "";
+    std::string package_version = "";
+    std::string architecture = "";
 
     // Process command-line arguments
     for (int i = 1; i < argc; i++) {
@@ -269,29 +23,38 @@ int cmd_manifest(int argc, char** argv) {
             verbose = true;
         } else if (arg == "-h" || arg == "--help" || arg == "help") {
             show_help = true;
-        } else if ((arg == "-p" || arg == "--package-dir") && i + 1 < argc) {
-            package_dir = argv[i + 1];
+        } else if ((arg == "-s" || arg == "--stage") && i + 1 < argc) {
+            stage_dir = argv[i + 1];
+            i++; // Skip the next argument
+        } else if ((arg == "-n" || arg == "--name") && i + 1 < argc) {
+            package_name = argv[i + 1];
+            i++; // Skip the next argument
+        } else if ((arg == "-V" || arg == "--version") && i + 1 < argc) {
+            package_version = argv[i + 1];
+            i++; // Skip the next argument
+        } else if ((arg == "-a" || arg == "--architecture") && i + 1 < argc) {
+            architecture = argv[i + 1];
             i++; // Skip the next argument
         }
     }
 
     // If help was requested, show it and return
     if (show_help) {
-        return cmd_manifest_help(argc, argv);
+        return cmd_metadata_help(argc, argv);
     }
 
-    // Validate that package directory is provided
-    if (package_dir.empty()) {
-        dpm_log(LOG_ERROR, "Package directory is required (--package-dir/-p)");
-        return cmd_manifest_help(argc, argv);
+    // Validate that stage directory is provided
+    if (stage_dir.empty()) {
+        dpm_log(LOG_ERROR, "Package stage directory is required (--stage/-s)");
+        return cmd_metadata_help(argc, argv);
     }
 
     // Expand path if needed
-    package_dir = expand_path(package_dir);
+    stage_dir = expand_path(stage_dir);
 
-    // Check if package directory exists
-    if (!std::filesystem::exists(package_dir)) {
-        dpm_log(LOG_ERROR, ("Package directory does not exist: " + package_dir).c_str());
+    // Check if stage directory exists
+    if (!std::filesystem::exists(stage_dir)) {
+        dpm_log(LOG_ERROR, ("Stage directory does not exist: " + stage_dir).c_str());
         return 1;
     }
 
@@ -302,20 +65,44 @@ int cmd_manifest(int argc, char** argv) {
 
     // Call the appropriate function based on the refresh flag
     if (refresh) {
-        int result = refresh_contents_manifest(package_dir, force);
-        if (result != 0) {
-            dpm_log(LOG_ERROR, "Failed to refresh contents manifest.");
-            return result;
-        }
-        dpm_log(LOG_INFO, "Contents manifest refreshed successfully.");
-        return 0;
-    } else {
-        bool success = generate_contents_manifest(std::filesystem::path(package_dir));
+        // For refresh mode, we only need the stage directory
+        bool success = metadata_refresh_dynamic_files(stage_dir);
         if (!success) {
-            dpm_log(LOG_ERROR, "Failed to generate contents manifest.");
+            dpm_log(LOG_ERROR, "Failed to refresh metadata files.");
             return 1;
         }
-        dpm_log(LOG_INFO, "Contents manifest generated successfully.");
+        dpm_log(LOG_INFO, "Metadata files refreshed successfully.");
+        return 0;
+    } else {
+        // For generate mode, we need additional parameters
+        if (package_name.empty()) {
+            dpm_log(LOG_ERROR, "Package name is required for metadata generation (--name/-n)");
+            return cmd_metadata_help(argc, argv);
+        }
+
+        if (package_version.empty()) {
+            dpm_log(LOG_ERROR, "Package version is required for metadata generation (--version/-V)");
+            return cmd_metadata_help(argc, argv);
+        }
+
+        if (architecture.empty()) {
+            dpm_log(LOG_ERROR, "Package architecture is required for metadata generation (--architecture/-a)");
+            return cmd_metadata_help(argc, argv);
+        }
+
+        bool success = metadata_generate_new(
+            std::filesystem::path(stage_dir),
+            package_name,
+            package_version,
+            architecture
+        );
+
+        if (!success) {
+            dpm_log(LOG_ERROR, "Failed to generate metadata files.");
+            return 1;
+        }
+
+        dpm_log(LOG_INFO, "Metadata files generated successfully.");
         return 0;
     }
 }
@@ -488,7 +275,7 @@ int cmd_help(int argc, char** argv) {
     dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Available commands:");
     dpm_log(LOG_INFO, "  stage      - Stage a new DPM package directory");
-    dpm_log(LOG_INFO, "  manifest   - Generate or refresh package manifest");
+    dpm_log(LOG_INFO, "  metadata   - Generate or refresh package metadata");
     dpm_log(LOG_INFO, "  sign       - Sign a package or package stage directory");
     dpm_log(LOG_INFO, "  seal       - Seal a package stage directory into final format");
     dpm_log(LOG_INFO, "  unseal     - Unseal a package back to stage format");
@@ -509,16 +296,29 @@ int cmd_unknown(const char* command, int argc, char** argv) {
     return 1;
 }
 
-int cmd_manifest_help(int argc, char** argv) {
-    dpm_log(LOG_INFO, "Usage: dpm build manifest [options]");
+int cmd_metadata_help(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Usage: dpm build metadata [options]");
     dpm_log(LOG_INFO, "");
     dpm_log(LOG_INFO, "Options:");
-    dpm_log(LOG_INFO, "  -p, --package-dir DIR     Package directory path (required)");
-    dpm_log(LOG_INFO, "  -r, --refresh             Refresh existing manifest (default: generate new)");
-    dpm_log(LOG_INFO, "  -f, --force               Force manifest operation even if warnings occur");
+    dpm_log(LOG_INFO, "  -s, --stage DIR           Package stage directory path (required)");
+    dpm_log(LOG_INFO, "  -r, --refresh             Refresh existing metadata (use for updating)");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "For new metadata generation (when not using --refresh):");
+    dpm_log(LOG_INFO, "  -n, --name NAME           Package name (required for new generation)");
+    dpm_log(LOG_INFO, "  -V, --version VERSION     Package version (required for new generation)");
+    dpm_log(LOG_INFO, "  -a, --architecture ARCH   Package architecture (required for new generation)");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Additional options:");
+    dpm_log(LOG_INFO, "  -f, --force               Force operation even if warnings occur");
     dpm_log(LOG_INFO, "  -v, --verbose             Enable verbose output");
     dpm_log(LOG_INFO, "  -h, --help                Display this help message");
     dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "Examples:");
+    dpm_log(LOG_INFO, "  # Refresh metadata in an existing package stage:");
+    dpm_log(LOG_INFO, "  dpm build metadata --stage=./my-package-1.0.x86_64 --refresh");
+    dpm_log(LOG_INFO, "");
+    dpm_log(LOG_INFO, "  # Generate new metadata for a package stage:");
+    dpm_log(LOG_INFO, "  dpm build metadata --stage=./my-package-1.0.x86_64 --name=my-package --version=1.0 --architecture=x86_64");
     return 0;
 }
 

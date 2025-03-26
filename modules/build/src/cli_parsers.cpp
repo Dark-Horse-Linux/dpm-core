@@ -237,9 +237,9 @@ Command parse_command(const char* cmd_str) {
         return CMD_STAGE;
     }
 
-    // Check for manifest command, including when it has additional arguments
-    if (strncmp(cmd_str, "manifest", 8) == 0) {
-        return CMD_MANIFEST;
+    // Check for command, including when it has additional arguments
+    if (strncmp(cmd_str, "metadata", 8) == 0) {
+        return CMD_METADATA;
     }
 
     // Check for sign command, including when it has additional arguments

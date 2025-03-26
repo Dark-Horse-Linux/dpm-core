@@ -29,7 +29,7 @@ int cmd_stage(int argc, char** argv);
  * @param argv Array of arguments
  * @return 0 on success, non-zero on failure
  */
-int cmd_manifest(int argc, char** argv);
+int cmd_metadata(int argc, char** argv);
 
 /**
  * @brief Handler for the sign command
@@ -84,7 +84,7 @@ int cmd_sign_help(int argc, char** argv);
  * @param argv Array of arguments
  * @return 0 on success, non-zero on failure
  */
-int cmd_manifest_help(int argc, char** argv);
+int cmd_metadata_help(int argc, char** argv);
 
 /**
  * @brief Handler for unknown commands
