@@ -30,12 +30,13 @@
 
 #include "handlers.hpp"
 
-// Helper function for validating required fields in a FlexDPMError
 void validate_field(FlexDPMError context, const char* field_name, const void* field_value)
 {
     if (!field_value) {
-        std::cerr << "Error: Incomplete error context. Missing required field: " << field_name;
-        std::cerr << " (Error category: " << static_cast<int>(context.error) << ")" << std::endl;
+        std::string error_msg = "Error category " + std::to_string(static_cast<int>(context.error)) +
+                               ": Incomplete error context. Missing required field: " + field_name;
+
+        dpm_log(FATAL, error_msg.c_str());
 
         // Hard exit when a required field is missing
         exit(1);
@@ -100,68 +101,78 @@ int handle_error(FlexDPMError context) {
 }
 
 // Now the individual handlers can be simplified since required fields are guaranteed
-int handle_path_not_found( FlexDPMError context ) {
-    std::cerr << "Fatal error: The module directory '" << context.module_path << "' was not found. Exiting." << std::endl;
+int handle_path_not_found(FlexDPMError context) {
+    std::string error_msg = "Fatal error: The module directory '" + std::string(context.module_path) + "' was not found. Exiting.";
+    dpm_log(FATAL, error_msg.c_str());
     return 1;
 }
 
-int handle_path_not_directory( FlexDPMError context ) {
-    std::cerr << "Fatal error: The module path '"  << context.module_path << "' is not a directory.  Exiting." << std::endl;
+int handle_path_not_directory(FlexDPMError context) {
+    std::string error_msg = "Fatal error: The module path '" + std::string(context.module_path) + "' is not a directory. Exiting.";
+    dpm_log(FATAL, error_msg.c_str());
     return 1;
 }
 
-int handle_path_too_long( FlexDPMError context ) {
-    std::cerr << "Error: Module path is too long: '" << context.module_path << "'.  Exiting." << std::endl;
+int handle_path_too_long(FlexDPMError context) {
+    std::string error_msg = "Error: Module path is too long: '" + std::string(context.module_path) + "'. Exiting.";
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
-int handle_permission_denied( FlexDPMError context ) {
-    std::cerr << "Error: Permission denied accessing the modules path: '" << context.module_path << "'.  Exiting." << std::endl;
+int handle_permission_denied(FlexDPMError context) {
+    std::string error_msg = "Error: Permission denied accessing the modules path: '" + std::string(context.module_path) + "'. Exiting.";
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
-int handle_module_not_found( FlexDPMError context ) {
-    std::cerr << "Error: Module '"<< context.module_name << "' not found in '" << context.module_path << "'.  Exiting."  << std::endl;
+int handle_module_not_found(FlexDPMError context) {
+    std::string error_msg = "Error: Module '" + std::string(context.module_name) + "' not found in '" + std::string(context.module_path) + "'. Exiting.";
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
-int handle_module_not_loaded( FlexDPMError context ) {
-    std::cerr << "Error: Attempted to execute module before loading it: " << context.module_name << std::endl;
+int handle_module_not_loaded(FlexDPMError context) {
+    std::string error_msg = "Error: Attempted to execute module before loading it: " + std::string(context.module_name);
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
-int handle_module_load_failed( FlexDPMError context ) {
-    std::cerr << "Error: Failed to load module: " << context.module_name << std::endl;
+int handle_module_load_failed(FlexDPMError context) {
+    std::string error_msg = "Error: Failed to load module: " + std::string(context.module_name);
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
-int handle_invalid_module( FlexDPMError context ) {
-    std::cerr << "Error: Invalid module format: " << context.module_name << std::endl;
+int handle_invalid_module(FlexDPMError context) {
+    std::string error_msg = "Error: Invalid module format: " + std::string(context.module_name);
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
-int handle_symbol_not_found( FlexDPMError context ) {
-    std::cerr << "Error: Symbol not found in module: " << context.module_name;
+
+int handle_symbol_not_found(FlexDPMError context) {
+    std::string error_msg = "Error: Symbol not found in module: " + std::string(context.module_name);
     if (context.message) {
-        std::cerr << " (" << context.message << ")";
+        error_msg += " (" + std::string(context.message) + ")";
     }
-    std::cerr << std::endl;
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
 int handle_symbol_execution_failed(FlexDPMError context) {
-    std::cerr << "Error: Module execution failed: " << context.module_name << std::endl;
+    std::string error_msg = "Error: Module execution failed: " + std::string(context.module_name);
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }
 
 int handle_undefined_error(FlexDPMError context) {
-    std::cerr << "Error: Undefined error occurred";
+    std::string error_msg = "Error: Undefined error occurred";
     if (context.module_name) {
-        std::cerr << " with module: " << context.module_name;
+        error_msg += " with module: " + std::string(context.module_name);
     }
     if (context.message) {
-        std::cerr << " (" << context.message << ")";
+        error_msg += " (" + std::string(context.message) + ")";
     }
-    std::cerr << std::endl;
+    dpm_log(ERROR, error_msg.c_str());
     return 1;
 }

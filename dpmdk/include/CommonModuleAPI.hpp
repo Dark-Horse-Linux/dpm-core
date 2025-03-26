@@ -132,6 +132,17 @@ extern "C" {
     void dpm_log(int level, const char* message);
 
     /**
+     * @brief Console logging function
+     *
+     * Allows modules to log messages to the console only, bypassing the file logging.
+     * This is useful for user-facing output that doesn't need to be recorded in logs.
+     *
+     * @param level The log level (LOG_FATAL, LOG_ERROR, LOG_WARN, LOG_INFO, LOG_DEBUG)
+     * @param message The message to log
+     */
+    void dpm_con(int level, const char* message);
+
+    /**
      * @brief Sets the logging level
      *
      * Allows modules to set the logging level used by the DPM logging system.
@@ -163,6 +174,18 @@ extern "C" {
  */
 #define DPM_MODULE_STANDALONE_MAIN() \
 extern "C" void dpm_log(int level, const char* message) { \
+const char* level_str; \
+switch (level) { \
+case 0: level_str = "FATAL"; break; \
+case 1: level_str = "ERROR"; break; \
+case 2: level_str = "WARN"; break; \
+case 3: level_str = "INFO"; break; \
+case 4: level_str = "DEBUG"; break; \
+default: level_str = "UNKNOWN"; break; \
+} \
+std::cout << "[" << level_str << "] " << message << std::endl; \
+} \
+extern "C" void dpm_con(int level, const char* message) { \
 const char* level_str; \
 switch (level) { \
 case 0: level_str = "FATAL"; break; \

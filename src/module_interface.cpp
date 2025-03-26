@@ -64,6 +64,37 @@ extern "C" void dpm_log(int level, const char* message) {
     g_logger.log(log_level, message);
 }
 
+extern "C" void dpm_con(int level, const char* message) {
+    if (!message) {
+        return;
+    }
+
+    // Convert integer level to LoggingLevels enum
+    LoggingLevels log_level;
+    switch (level) {
+        case 0:
+            log_level = LoggingLevels::FATAL;
+        break;
+        case 1:
+            log_level = LoggingLevels::ERROR;
+        break;
+        case 2:
+            log_level = LoggingLevels::WARN;
+        break;
+        case 3:
+            log_level = LoggingLevels::INFO;
+        break;
+        case 4:
+            log_level = LoggingLevels::DEBUG;
+        break;
+        default:
+            log_level = LoggingLevels::INFO;
+        break;
+    }
+
+    g_logger.log_console(log_level, message);
+}
+
 extern "C" void dpm_set_logging_level(int level) {
     // Convert integer level to LoggingLevels enum
     LoggingLevels log_level;

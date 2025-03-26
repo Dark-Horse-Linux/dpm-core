@@ -78,6 +78,18 @@ public:
     void log(LoggingLevels log_level, const std::string& message);
 
     /**
+     * @brief Logs a message to console only
+     *
+     * Writes a log message only to the console, skipping any file logging.
+     * Messages with levels FATAL, ERROR, or WARN are written to stderr,
+     * while others go to stdout.
+     *
+     * @param level The severity level of the message
+     * @param message The message to log
+     */
+    void log_console(LoggingLevels level, const std::string& message);
+
+    /**
      * @brief Sets the log file path
      * 
      * Changes the file path where log messages are written when file

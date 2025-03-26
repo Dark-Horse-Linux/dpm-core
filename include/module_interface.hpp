@@ -122,6 +122,17 @@ extern "C" {
     void dpm_log(int level, const char* message);
 
     /**
+     * @brief Logs messages to console only
+     *
+     * Allows modules to log messages to the console only, skipping any file logging.
+     * This is useful for user-facing output that doesn't need to be recorded.
+     *
+     * @param level The log level as an integer (0=FATAL, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG)
+     * @param message The message to log
+     */
+    void dpm_con(int level, const char* message);
+
+    /**
      * @brief Sets the logging level
      *
      * Allows modules to set the logging level used by the DPM logging system.

@@ -82,16 +82,17 @@ std::string detect_os() {
 /**
  * Command handler for help command
  */
+
 int cmd_help(int argc, char** argv) {
-    dpm_log(LOG_INFO, "DPM Info Module - Provides information about the system.");
-    dpm_log(LOG_INFO, "");
-    dpm_log(LOG_INFO, "Available commands:");
-    dpm_log(LOG_INFO, "");
-    dpm_log(LOG_INFO, "  version    - Display DPM version information");
-    dpm_log(LOG_INFO, "  system     - Display system information");
-    dpm_log(LOG_INFO, "  config     - Display configuration information");
-    dpm_log(LOG_INFO, "  help       - Display this help message");
-    dpm_log(LOG_INFO, "");
+    dpm_con(LOG_INFO, "DPM Info Module - Provides information about the system.");
+    dpm_con(LOG_INFO, "");
+    dpm_con(LOG_INFO, "Available commands:");
+    dpm_con(LOG_INFO, "");
+    dpm_con(LOG_INFO, "  version    - Display DPM version information");
+    dpm_con(LOG_INFO, "  system     - Display system information");
+    dpm_con(LOG_INFO, "  config     - Display configuration information");
+    dpm_con(LOG_INFO, "  help       - Display this help message");
+    dpm_con(LOG_INFO, "");
 
     return 0;
 }
@@ -102,15 +103,15 @@ int cmd_help(int argc, char** argv) {
 int cmd_version(int argc, char** argv) {
     std::string version_msg = "DPM Version: ";
     version_msg += DPM_VERSION;
-    dpm_log(LOG_INFO, version_msg.c_str());
+    dpm_con(LOG_INFO, version_msg.c_str());
 
     std::string date_msg = "Build Date: ";
     date_msg += __DATE__;
-    dpm_log(LOG_INFO, date_msg.c_str());
+    dpm_con(LOG_INFO, date_msg.c_str());
 
     std::string time_msg = "Build Time: ";
     time_msg += __TIME__;
-    dpm_log(LOG_INFO, time_msg.c_str());
+    dpm_con(LOG_INFO, time_msg.c_str());
 
     return 0;
 }
@@ -119,15 +120,15 @@ int cmd_version(int argc, char** argv) {
  * Command handler for system command
  */
 int cmd_system(int argc, char** argv) {
-    dpm_log(LOG_INFO, "System Information:");
+    dpm_con(LOG_INFO, "System Information:");
 
     std::string os_msg = "  OS: ";
     os_msg += detect_os();
-    dpm_log(LOG_INFO, os_msg.c_str());
+    dpm_con(LOG_INFO, os_msg.c_str());
 
     std::string arch_msg = "  Architecture: ";
     arch_msg += detect_architecture();
-    dpm_log(LOG_INFO, arch_msg.c_str());
+    dpm_con(LOG_INFO, arch_msg.c_str());
 
     return 0;
 }
@@ -138,11 +139,11 @@ int cmd_system(int argc, char** argv) {
 int cmd_config(int argc, char** argv) {
     const char* module_path = dpm_get_config("modules", "module_path");
 
-    dpm_log(LOG_INFO, "Configuration Information:");
+    dpm_con(LOG_INFO, "Configuration Information:");
 
     std::string path_msg = "  Module Path: ";
     path_msg += (module_path ? module_path : "Not configured");
-    dpm_log(LOG_INFO, path_msg.c_str());
+    dpm_con(LOG_INFO, path_msg.c_str());
 
     return 0;
 }
@@ -153,8 +154,8 @@ int cmd_config(int argc, char** argv) {
 int cmd_unknown(const char* command, int argc, char** argv) {
     std::string msg = "Unknown command: ";
     msg += (command ? command : "");
-    dpm_log(LOG_WARN, msg.c_str());
-    dpm_log(LOG_WARN, "Run 'dpm info help' for a list of available commands");
+    dpm_con(LOG_WARN, msg.c_str());
+    dpm_con(LOG_WARN, "Run 'dpm info help' for a list of available commands");
     return 1;
 }
 

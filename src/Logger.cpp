@@ -157,3 +157,23 @@ void Logger::log(LoggingLevels message_level, const std::string& message)
         }
     }
 }
+
+void Logger::log_console(LoggingLevels level, const std::string& message)
+{
+    // Only process if the message level is less than or equal to the configured level
+    if (level <= log_level) {
+        // Convert log level to string
+        std::string level_str = LogLevelToString(level);
+
+        // Console output without timestamp
+        if (level == LoggingLevels::FATAL ||
+            level == LoggingLevels::ERROR ||
+            level == LoggingLevels::WARN) {
+            // Send to stderr
+            std::cerr << level_str << ": " << message << std::endl;
+            } else {
+                // Send to stdout
+                std::cout << message << std::endl;
+            }
+    }
+}

@@ -37,6 +37,8 @@
 #include "error.hpp"
 #include "ConfigManager.hpp"
 #include "Logger.hpp"
+#include "LoggingLevels.hpp"
+#include "module_interface.hpp"
 
 /*
  *   DPM serves three functions:
@@ -84,8 +86,7 @@ int main( int argc, char* argv[] )
     if (!config_loaded)
     {
         // failed to load any configuration files, so alert the user
-        std::cerr << "Warning: No configuration files present or loaded from '"
-                  << g_config_manager.getConfigDir() << "*.conf', reverting to defaults." << std::endl;
+        dpm_con( ERROR, ("Warning: No configuration files present or loaded from '" + g_config_manager.getConfigDir() + "*.conf', reverting to defaults.").c_str());
     }
 
     // Configure logger (CLI args > config > defaults)

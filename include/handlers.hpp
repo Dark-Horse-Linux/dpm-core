@@ -32,6 +32,8 @@
 
 #include <iostream>
 #include "error.hpp"
+#include "LoggingLevels.hpp"
+#include "module_interface.hpp"
 
 /**
  * @brief Main error handler that dispatches to specific handlers

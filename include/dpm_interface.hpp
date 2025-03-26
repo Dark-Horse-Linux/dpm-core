@@ -41,6 +41,8 @@
 #include "dpm_interface_helpers.hpp"
 #include "Logger.hpp"
 
+#include <handlers.hpp>
+
 /**
  * @defgroup dpm_interface DPM Interface Methods
  * @brief Interface methods for the DPM command-line tool

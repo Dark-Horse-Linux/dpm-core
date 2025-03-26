@@ -30,7 +30,6 @@
 
 #include "dpm_interface.hpp"
 
-#include <handlers.hpp>
 
 /*
  *  DPM Interface methods.
@@ -49,23 +48,23 @@ int main_check_module_path(const ModuleLoader& loader)
     loader.get_module_path(path);
 
     if (!std::filesystem::exists(path)) {
-        g_logger.log(LoggingLevels::FATAL, "modules.modules_path does not exist: " + path);
+        dpm_con(FATAL, ("modules.modules_path does not exist: " + path).c_str());
         return 1;
     }
 
     if (!std::filesystem::is_directory(path)) {
-        g_logger.log(LoggingLevels::FATAL, "modules.modules_path is not a directory: " + path);
+        dpm_con(FATAL, ("modules.modules_path is not a directory: " + path).c_str());
         return 1;
     }
 
     try {
         auto perms = std::filesystem::status(path).permissions();
         if ((perms & std::filesystem::perms::owner_read) == std::filesystem::perms::none) {
-            g_logger.log(LoggingLevels::FATAL, "Permission denied: " + path);
+            dpm_con(FATAL, ("Permission denied: " + path).c_str());
             return 1;
         }
     } catch (const std::filesystem::filesystem_error&) {
-        g_logger.log(LoggingLevels::FATAL, "Permission denied: " + path);
+        dpm_con(FATAL, ("Permission denied: " + path).c_str());
         return 1;
     }
 
@@ -82,18 +81,18 @@ int main_list_modules(const ModuleLoader& loader) {
     // set the module path
     DPMErrorCategory get_path_error = loader.get_module_path(path);
     if (get_path_error != DPMErrorCategory::SUCCESS) {
-        g_logger.log(LoggingLevels::FATAL, "Failed to get modules.modules_path");
+        dpm_con(LoggingLevels::FATAL, "Failed to get modules.modules_path");
         return 1;
     }
 
     DPMErrorCategory list_error = loader.list_available_modules(modules);
     if (list_error != DPMErrorCategory::SUCCESS) {
-        g_logger.log(LoggingLevels::FATAL, "No modules found in modules.modules_path: " + path);
+        dpm_con(LoggingLevels::FATAL, ("No modules found in modules.modules_path: " + path).c_str());
         return 1;
     }
 
     if (modules.empty()) {
-        g_logger.log(LoggingLevels::FATAL, "No modules found in modules.modules_path: '" + path + "'.");
+        dpm_con(LoggingLevels::FATAL, ("No modules found in modules.modules_path: '" + path + "'.").c_str());
         return 0;
     }
 
@@ -115,7 +114,7 @@ int main_list_modules(const ModuleLoader& loader) {
     }
 
     if (valid_modules.empty()) {
-        g_logger.log(LoggingLevels::FATAL, "No valid DPM commands available.");
+        dpm_con(LoggingLevels::FATAL, "No valid DPM commands available.");
         return 0;
     }
 
