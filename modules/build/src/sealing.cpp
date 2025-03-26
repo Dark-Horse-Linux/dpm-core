@@ -1,5 +1,6 @@
 #include "sealing.hpp"
 
+
 bool file_already_compressed(const std::string& path)
 {
     // Convert string to filesystem path
@@ -430,50 +431,59 @@ bool smart_compress_component( const std::filesystem::path& stage_dir, const std
     return true;
 }
 
-int seal_stage_components( const std::string& stage_dir, bool force )
+
+int seal_stage_components(const std::string& stage_dir, bool force)
 {
-    dpm_log(LOG_INFO, ("Sealing package stage: " + stage_dir).c_str());
+    dpm_con(LOG_INFO, ("Sealing package stage: " + stage_dir).c_str());
+
+    // First refresh the metadata to ensure it's up-to-date
+    dpm_con(LOG_INFO, "Refreshing metadata before sealing...");
+    bool metadata_refresh_result = metadata_refresh_dynamic_files(stage_dir);
+    if (!metadata_refresh_result) {
+        dpm_con(LOG_ERROR, "Failed to refresh metadata files before sealing. Aborting.");
+        return 1;
+    }
 
     // Verify the stage directory structure
-    std::filesystem::path stage_path( stage_dir );
+    std::filesystem::path stage_path(stage_dir);
 
-    if (! smart_compress_component( stage_dir, "contents" ) ) {
-        dpm_log(LOG_FATAL, ("Failed to compress contents: " + stage_dir).c_str() );
+    if (!smart_compress_component(stage_dir, "contents")) {
+        dpm_con(LOG_FATAL, ("Failed to compress contents: " + stage_dir).c_str());
         return 1;
     }
 
-    if (! smart_compress_component( stage_dir, "hooks" ) ) {
-        dpm_log(LOG_FATAL, ("Failed to compress hooks: " + stage_dir).c_str() );
+    if (!smart_compress_component(stage_dir, "hooks")) {
+        dpm_con(LOG_FATAL, ("Failed to compress hooks: " + stage_dir).c_str());
         return 1;
     }
 
-    if (! smart_compress_component( stage_dir, "metadata" ) ) {
-        dpm_log(LOG_FATAL, ("Failed to compress metadata: " + stage_dir).c_str() );
+    if (!smart_compress_component(stage_dir, "metadata")) {
+        dpm_con(LOG_FATAL, ("Failed to compress metadata: " + stage_dir).c_str());
         return 1;
     }
 
     // Handle signatures component - check if it's an empty directory
-    if ( std::filesystem::is_directory( stage_path / "signatures" ) ) {
+    if (std::filesystem::is_directory(stage_path / "signatures")) {
         bool signatures_empty = true;
 
         // Check if signatures directory is empty
-        for ( const auto& entry : std::filesystem::directory_iterator( stage_path / "signatures" ) ) {
+        for (const auto& entry : std::filesystem::directory_iterator(stage_path / "signatures")) {
             signatures_empty = false;
             break;
         }
 
-        if ( signatures_empty ) {
-            dpm_log(LOG_INFO, "Signatures directory is empty, not compressing.");
+        if (signatures_empty) {
+            dpm_con(LOG_INFO, "Signatures directory is empty, not compressing.");
         } else {
-            dpm_log(LOG_INFO, "Compressing signatures component.");
-            if (! smart_compress_component( stage_dir, "signatures" ) ) {
-                dpm_log(LOG_FATAL, ("Failed to compress signatures: " + stage_dir).c_str() );
+            dpm_con(LOG_INFO, "Compressing signatures component.");
+            if (!smart_compress_component(stage_dir, "signatures")) {
+                dpm_con(LOG_FATAL, ("Failed to compress signatures: " + stage_dir).c_str());
                 return 1;
             }
         }
     }
 
-    dpm_log(LOG_INFO, "Package stage sealed successfully.");
+    dpm_con(LOG_INFO, "Package stage sealed successfully.");
     return 0;
 }
 
