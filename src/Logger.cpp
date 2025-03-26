@@ -1,4 +1,3 @@
-// Logger.cpp
 #include "Logger.hpp"
 
 // Global logger instance
@@ -28,12 +27,16 @@ void Logger::setLogFile(const std::string& new_log_file)
         if (!log_dir.empty() && !std::filesystem::exists(log_dir)) {
             try {
                 if (!std::filesystem::create_directories(log_dir)) {
-                    std::cerr << "FATAL: Failed to create log directory: " << log_dir.string() << std::endl;
-                    exit(1);
+                    std::cerr << "Warning: Failed to create log directory: " << log_dir.string() << std::endl;
+                    // Continue execution, just disable file logging
+                    log_to_file = false;
+                    return;
                 }
             } catch (const std::filesystem::filesystem_error& e) {
-                std::cerr << "FATAL: Error creating log directory: " << e.what() << std::endl;
-                exit(1);
+                std::cerr << "Warning: Error creating log directory: " << e.what() << std::endl;
+                // Continue execution, just disable file logging
+                log_to_file = false;
+                return;
             }
         }
 
@@ -41,13 +44,17 @@ void Logger::setLogFile(const std::string& new_log_file)
         try {
             std::ofstream test_log_file(log_file, std::ios::app);
             if (!test_log_file.is_open()) {
-                std::cerr << "FATAL: Cannot open log file for writing: " << log_file << std::endl;
-                exit(1);
+                std::cerr << "Warning: Cannot open log file for writing: " << log_file << std::endl;
+                // Continue execution, just disable file logging
+                log_to_file = false;
+                return;
             }
             test_log_file.close();
         } catch (const std::exception& e) {
-            std::cerr << "FATAL: Error validating log file access: " << e.what() << std::endl;
-            exit(1);
+            std::cerr << "Warning: Error validating log file access: " << e.what() << std::endl;
+            // Continue execution, just disable file logging
+            log_to_file = false;
+            return;
         }
     }
 }
@@ -55,11 +62,6 @@ void Logger::setLogFile(const std::string& new_log_file)
 void Logger::setWriteToLog(bool new_write_to_log)
 {
     log_to_file = new_write_to_log;
-
-    // If logging was just enabled, validate the log file
-    if (log_to_file) {
-        setLogFile(log_file);
-    }
 }
 
 void Logger::setLogLevel(LoggingLevels new_log_level)
@@ -137,10 +139,20 @@ void Logger::log(LoggingLevels message_level, const std::string& message)
                     log_stream << formatted_message << std::endl;
                     log_stream.close();
                 } else {
-                    std::cerr << "Failed to write to log file: " << log_file << std::endl;
+                    // Just log to console, don't error out the program just for log file issues
+                    if (message_level != LoggingLevels::FATAL && message_level != LoggingLevels::ERROR) {
+                        std::cerr << "Warning: Failed to write to log file: " << log_file << std::endl;
+                    }
+                    // Disable file logging for future messages
+                    log_to_file = false;
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Error writing to log file: " << e.what() << std::endl;
+                // Just log to console, don't error out the program just for log file issues
+                if (message_level != LoggingLevels::FATAL && message_level != LoggingLevels::ERROR) {
+                    std::cerr << "Warning: Error writing to log file: " << e.what() << std::endl;
+                }
+                // Disable file logging for future messages
+                log_to_file = false;
             }
         }
     }

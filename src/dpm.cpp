@@ -80,7 +80,8 @@ int main( int argc, char* argv[] )
     }
 
     // Load configuration files
-    if ( !g_config_manager.loadConfigurations() )
+    bool config_loaded = g_config_manager.loadConfigurations();
+    if (!config_loaded)
     {
         // failed to load any configuration files, so alert the user
         std::cerr << "Warning: No configuration files present or loaded from '"
@@ -101,17 +102,58 @@ int main( int argc, char* argv[] )
     g_logger.setWriteToLog(config_write_to_log);
     g_logger.setLogFile(config_log_file);
 
+    // If help is requested, show it and exit - handle this early before any logging is needed
+    if (args.show_help) {
+        return main_show_help();
+    }
+
+    // If list modules is requested, handle it early too
+    if (args.list_modules) {
+        // Determine the module path (CLI arg > config > default)
+        std::string module_path;
+
+        // If CLI argument was provided, use it
+        if (!args.module_path.empty())
+        {
+            module_path = args.module_path;
+        } else {
+            // Otherwise, check configuration file
+            const char* config_module_path = g_config_manager.getConfigValue("modules", "module_path");
+            if (config_module_path)
+            {
+                module_path = config_module_path;
+            } else {
+                // use default if nothing else is available
+                module_path = DPMDefaults::MODULE_PATH;
+            }
+        }
+
+        // create a module loader object with the determined path
+        ModuleLoader loader(module_path);
+
+        // check the module path for the loader object
+        int path_check_result = main_check_module_path(loader);
+        if (path_check_result != 0)
+        {
+            // exit if there's an error and ensure
+            // it has an appropriate return code
+            return path_check_result;
+        }
+
+        return main_list_modules(loader);
+    }
+
     // Determine the module path (CLI arg > config > default)
     std::string module_path;
 
     // If CLI argument was provided, use it
-    if ( !args.module_path.empty() )
+    if (!args.module_path.empty())
     {
         module_path = args.module_path;
     } else {
         // Otherwise, check configuration file
-        const char * config_module_path = g_config_manager.getConfigValue( "modules", "module_path" );
-        if ( config_module_path )
+        const char* config_module_path = g_config_manager.getConfigValue("modules", "module_path");
+        if (config_module_path)
         {
             module_path = config_module_path;
         } else {
@@ -121,25 +163,15 @@ int main( int argc, char* argv[] )
     }
 
     // create a module loader object with the determined path
-    ModuleLoader loader( module_path );
+    ModuleLoader loader(module_path);
 
     // check the module path for the loader object
-    int path_check_result = main_check_module_path( loader );
-    if ( path_check_result != 0 )
+    int path_check_result = main_check_module_path(loader);
+    if (path_check_result != 0)
     {
         // exit if there's an error and ensure
         // it has an appropriate return code
         return path_check_result;
-    }
-
-    // If help is requested, show it and exit
-    if (args.show_help) {
-        return main_show_help();
-    }
-
-    // If list modules is requested, show the list and exit
-    if (args.list_modules) {
-        return main_list_modules(loader);
     }
 
     // if no module is provided to execute, then trigger the default
@@ -149,7 +181,7 @@ int main( int argc, char* argv[] )
     }
 
     // execute the module
-    int return_code = main_execute_module( loader, args.module_name, args.command );
+    int return_code = main_execute_module(loader, args.module_name, args.command);
 
     return return_code;
 }
