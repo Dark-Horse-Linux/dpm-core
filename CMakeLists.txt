@@ -35,8 +35,11 @@ add_subdirectory(modules/info ${CMAKE_BINARY_DIR}/build-modules/info)
 # add the build module by including that
 add_subdirectory(modules/build ${CMAKE_BINARY_DIR}/build-modules/build)
 
+# add the verify module
+add_subdirectory(modules/verify ${CMAKE_BINARY_DIR}/build-modules/verify)
+
 # Create a custom target for building all modules
-add_custom_target(modules DEPENDS info build)
+add_custom_target(modules DEPENDS info build verify)
 
 # Installation rules
 install(TARGETS dpm DESTINATION bin)

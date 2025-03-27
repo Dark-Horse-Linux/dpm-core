@@ -65,7 +65,6 @@ int seal_final_package(const std::string &stage_dir, const std::string &output_d
  */
 int unseal_package(const std::string& package_path, const std::string& output_dir, bool force);
 
-
 /**
  * @brief Unseals component files in a stage directory
  *
