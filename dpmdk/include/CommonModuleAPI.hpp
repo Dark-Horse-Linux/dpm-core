@@ -151,6 +151,16 @@ extern "C" {
      * @param level The log level (LOG_FATAL, LOG_ERROR, LOG_WARN, LOG_INFO, LOG_DEBUG)
      */
     void dpm_set_logging_level(int level);
+
+    /**
+     * @brief Gets the module path
+     *
+     * Returns the path where DPM modules are located, as determined by
+     * command-line arguments, configuration files, or defaults.
+     *
+     * @return The module path
+     */
+    const char* dpm_get_module_path(void);
 }
 
 /**
@@ -209,6 +219,11 @@ return env_value; /* Will be null if env var doesn't exist */ \
 } \
 extern "C" void dpm_set_logging_level(int level) { \
 std::cout << "[INFO] Verbosity level ignored, as all standalone executions have maximum verbosity" << std::endl; \
+} \
+extern "C" const char* dpm_get_module_path(void) { \
+/* Get from environment variable or use default */ \
+const char* env_path = getenv("DPM_MODULE_PATH"); \
+return env_path ? env_path : "/usr/lib/dpm/modules/"; \
 } \
 int main(int argc, char** argv) { \
 /* Default to "help" if no command is provided */ \

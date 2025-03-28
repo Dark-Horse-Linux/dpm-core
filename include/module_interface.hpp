@@ -141,5 +141,16 @@ extern "C" {
      * @param level The log level as an integer (0=FATAL, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG)
      */
     void dpm_set_logging_level(int level);
+
+    /**
+     * @brief Gets the derived module path from the global configuration
+     *
+     * Allows modules to retrieve the configured module path used by DPM.
+     * This path is determined at runtime based on CLI arguments, configuration files,
+     * and defaults, in order of precedence.
+     *
+     * @return The module path as a string
+     */
+    const char* dpm_get_module_path(void);
 }
 /** @} */

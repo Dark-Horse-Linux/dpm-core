@@ -12,6 +12,39 @@
 
 #include "verify_commands.hpp"
 
+int check_and_load_build_module(void*& module_handle) {
+    // Get the module path using the new direct accessor
+    const char* module_path = dpm_get_module_path();
+    if (!module_path || strlen(module_path) == 0) {
+        dpm_log(LOG_ERROR, "Module path not available");
+        return 1;
+    }
+
+    // Create a proper path object
+    std::filesystem::path modules_dir(module_path);
+
+    // Build path to the build module
+    std::filesystem::path build_module_path = modules_dir / "build.so";
+
+    // Check if the file exists
+    if (!std::filesystem::exists(build_module_path)) {
+        dpm_log(LOG_ERROR, ("Build module not found at: " + build_module_path.string()).c_str());
+        return 1;
+    }
+
+    // Load the module
+    module_handle = dlopen(build_module_path.c_str(), RTLD_LAZY);
+    if (!module_handle) {
+        dpm_log(LOG_ERROR, ("Failed to load build module: " + std::string(dlerror())).c_str());
+        return 1;
+    }
+
+    // Clear any error
+    dlerror();
+
+    return 0;
+}
+
 int cmd_checksum(int argc, char** argv) {
     // Parse command line arguments
     bool all_packages = false;

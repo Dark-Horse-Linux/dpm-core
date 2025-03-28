@@ -37,7 +37,7 @@
  * @param force Whether to force the operation even if warnings occur
  * @return 0 on success, non-zero on failure
  */
-int seal_stage_components( const std::string& stage_dir, bool force );
+extern "C" int seal_stage_components( const std::string& stage_dir, bool force );
 
 /**
  * @brief Second phase of sealing to finalize a package
@@ -50,7 +50,7 @@ int seal_stage_components( const std::string& stage_dir, bool force );
  * @param force Whether to force the operation even if warnings occur
  * @return 0 on success, non-zero on failure
  */
-int seal_final_package(const std::string &stage_dir, const std::string &output_dir, bool force);
+extern "C" int seal_final_package(const std::string &stage_dir, const std::string &output_dir, bool force);
 
 /**
  * @brief Unseals a package file back to stage format
@@ -63,7 +63,7 @@ int seal_final_package(const std::string &stage_dir, const std::string &output_d
  * @param force Whether to force the operation even if warnings occur
  * @return 0 on success, non-zero on failure
  */
-int unseal_package(const std::string& package_path, const std::string& output_dir, bool force);
+extern "C" int unseal_package(const std::string& package_path, const std::string& output_dir, bool force);
 
 /**
  * @brief Unseals component files in a stage directory
@@ -74,4 +74,4 @@ int unseal_package(const std::string& package_path, const std::string& output_di
  * @param stage_dir Path to the stage directory containing components
  * @return 0 on success, non-zero on failure
  */
-int unseal_stage_components(const std::filesystem::path& stage_dir);
+extern "C" int unseal_stage_components(const std::filesystem::path& stage_dir);

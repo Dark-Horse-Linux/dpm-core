@@ -129,6 +129,8 @@ int main( int argc, char* argv[] )
             }
         }
 
+        g_config_manager.setModulePath(module_path);
+
         // create a module loader object with the determined path
         ModuleLoader loader(module_path);
 

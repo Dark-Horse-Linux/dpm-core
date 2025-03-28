@@ -114,3 +114,4 @@ extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
 #ifdef BUILD_STANDALONE
 DPM_MODULE_STANDALONE_MAIN()
 #endif // BUILD_STANDALONE
+

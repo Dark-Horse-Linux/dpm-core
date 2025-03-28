@@ -15,6 +15,9 @@
 #include <string>
 #include <cstring>
 #include <dpmdk/include/CommonModuleAPI.hpp>
+#include <dlfcn.h>
+#include <sys/stat.h>
+#include <filesystem>
 
 /**
  * @enum Command

@@ -121,3 +121,9 @@ extern "C" void dpm_set_logging_level(int level) {
 
     g_logger.setLogLevel(log_level);
 }
+
+extern "C" const char* dpm_get_module_path(void) {
+    static std::string module_path;
+    module_path = g_config_manager.getModulePath();
+    return module_path.c_str();
+}

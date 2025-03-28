@@ -432,7 +432,7 @@ bool smart_compress_component( const std::filesystem::path& stage_dir, const std
 }
 
 
-int seal_stage_components(const std::string& stage_dir, bool force)
+extern "C" int seal_stage_components(const std::string& stage_dir, bool force)
 {
     dpm_con(LOG_INFO, ("Sealing package stage: " + stage_dir).c_str());
 
@@ -487,7 +487,7 @@ int seal_stage_components(const std::string& stage_dir, bool force)
     return 0;
 }
 
-int seal_final_package(const std::string &stage_dir, const std::string &output_dir, bool force)
+extern "C" int seal_final_package(const std::string &stage_dir, const std::string &output_dir, bool force)
 {
     int stage_seal_result = seal_stage_components( stage_dir, force );
     if ( stage_seal_result != 0 ) {
@@ -525,7 +525,7 @@ int seal_final_package(const std::string &stage_dir, const std::string &output_d
     return 0;
 }
 
-int unseal_package(const std::string& package_filepath, const std::string& output_dir, bool force)
+extern "C" int unseal_package(const std::string& package_filepath, const std::string& output_dir, bool force)
 {
     dpm_log(LOG_INFO, ("Unsealing package: " + package_filepath).c_str());
 
@@ -657,7 +657,7 @@ bool smart_uncompress_component(const std::filesystem::path& stage_dir, const st
     return true;
 }
 
-int unseal_stage_components(const std::filesystem::path& stage_dir)
+extern "C" int unseal_stage_components(const std::filesystem::path& stage_dir)
 {
     dpm_log(LOG_INFO, ("Unsealing package components in: " + stage_dir.string()).c_str());
 

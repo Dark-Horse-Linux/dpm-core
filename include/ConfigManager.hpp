@@ -156,6 +156,12 @@ class ConfigManager {
          */
         bool hasConfigKey(const char* section, const char* key) const;
 
+        // getter for _module_path
+        void setModulePath(const std::string& module_path);
+
+        // setter for _module_path
+        std::string getModulePath() const;
+
     private:
         /**
          * @brief Default section name to use when none is specified
@@ -199,6 +205,8 @@ class ConfigManager {
          * @brief Configuration data structure: section -> key -> value
          */
         std::map<std::string, std::map<std::string, std::string>> _config_data;
+
+        std::string _module_path;
 };
 
 /**
