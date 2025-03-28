@@ -123,7 +123,7 @@ extern "C" void dpm_set_logging_level(int level) {
 }
 
 extern "C" const char* dpm_get_module_path(void) {
-    static std::string module_path;
+    static const char * module_path;
     module_path = g_config_manager.getModulePath();
-    return module_path.c_str();
+    return module_path;
 }

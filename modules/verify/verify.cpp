@@ -85,12 +85,15 @@ extern "C" int dpm_module_execute(const char* command, int argc, char** argv) {
         case CMD_SIGNATURE:
             return cmd_signature(argc, argv);
 
+        case CMD_CHECK:
+            return cmd_check(argc, argv);
+
         case CMD_HELP:
             return cmd_help(argc, argv);
 
         case CMD_UNKNOWN:
-        default:
-            return cmd_unknown(command, argc, argv);
+            default:
+                return cmd_unknown(command, argc, argv);
     }
 }
 

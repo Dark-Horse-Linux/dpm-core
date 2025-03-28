@@ -157,10 +157,10 @@ class ConfigManager {
         bool hasConfigKey(const char* section, const char* key) const;
 
         // getter for _module_path
-        void setModulePath(const std::string& module_path);
+        void setModulePath(const char * module_path);
 
         // setter for _module_path
-        std::string getModulePath() const;
+        const char * getModulePath() const;
 
     private:
         /**

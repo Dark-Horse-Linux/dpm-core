@@ -321,10 +321,10 @@ bool ConfigManager::getConfigBool(const char* section, const char* key, bool def
     return defaultValue;
 }
 
-void ConfigManager::setModulePath(const std::string& module_path) {
+void ConfigManager::setModulePath(const char * module_path) {
     _module_path = module_path;
 }
 
-std::string ConfigManager::getModulePath() const {
-    return _module_path;
+const char * ConfigManager::getModulePath() const {
+    return _module_path.c_str();
 }

@@ -27,7 +27,8 @@ enum Command {
     CMD_UNKNOWN,     /**< Unknown or unsupported command */
     CMD_HELP,        /**< Display help information */
     CMD_CHECKSUM,    /**< Verify package checksums */
-    CMD_SIGNATURE    /**< Verify package signatures */
+    CMD_SIGNATURE,   /**< Verify package signatures */
+    CMD_CHECK        /**< Check build module integration */
 };
 
 /**
@@ -85,3 +86,15 @@ int cmd_unknown(const char* command, int argc, char** argv);
  * @return The corresponding Command enum value
  */
 Command parse_command(const char* cmd_str);
+
+/**
+ * @brief Handler for the check command
+ *
+ * Checks if the build module can be loaded. This validates that the integration
+ * between the verify module and build module is working correctly.
+ *
+ * @param argc Number of arguments
+ * @param argv Array of arguments
+ * @return 0 on success, non-zero on failure
+ */
+int cmd_check(int argc, char** argv);

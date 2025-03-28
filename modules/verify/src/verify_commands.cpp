@@ -196,6 +196,7 @@ int cmd_help(int argc, char** argv) {
     dpm_con(LOG_INFO, "");
     dpm_con(LOG_INFO, "  checksum   - Verify checksums of installed packages");
     dpm_con(LOG_INFO, "  signature  - Verify signatures of installed packages");
+    dpm_con(LOG_INFO, "  check      - Check build module integration");
     dpm_con(LOG_INFO, "  help       - Display this help message");
     dpm_con(LOG_INFO, "");
     dpm_con(LOG_INFO, "Usage: dpm verify <command>");
@@ -227,6 +228,30 @@ Command parse_command(const char* cmd_str) {
     else if (strcmp(cmd_str, "signature") == 0) {
         return CMD_SIGNATURE;
     }
+    else if (strcmp(cmd_str, "check") == 0) {
+        return CMD_CHECK;
+    }
 
     return CMD_UNKNOWN;
+}
+
+int cmd_check(int argc, char** argv) {
+    dpm_log(LOG_INFO, "Checking build module integration...");
+
+    void* module_handle = nullptr;
+    int result = check_and_load_build_module(module_handle);
+
+    if (result != 0) {
+        dpm_log(LOG_ERROR, "Failed to load build module.");
+        return 1;
+    }
+
+    dpm_log(LOG_INFO, "Successfully loaded build module.");
+
+    // Clean up
+    if (module_handle) {
+        dlclose(module_handle);
+    }
+
+    return 0;
 }

@@ -129,8 +129,6 @@ int main( int argc, char* argv[] )
             }
         }
 
-        g_config_manager.setModulePath(module_path);
-
         // create a module loader object with the determined path
         ModuleLoader loader(module_path);
 
@@ -164,6 +162,8 @@ int main( int argc, char* argv[] )
             module_path = DPMDefaults::MODULE_PATH;
         }
     }
+
+    g_config_manager.setModulePath(module_path.c_str());
 
     // create a module loader object with the determined path
     ModuleLoader loader(module_path);

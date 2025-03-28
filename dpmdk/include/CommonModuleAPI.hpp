@@ -170,74 +170,7 @@ extern "C" {
  */
 #define DPM_VERSION "0.1.0"
 
-// If we're building in standalone mode, add support for standalone execution
+// If we're building in standalone mode, include the standalone implementations
 #ifdef BUILD_STANDALONE
-
-// Declare, but don't define the standalone implementations
-// These will be defined in the main file through the DPM_STANDALONE_IMPL macro
-
-/**
- * @brief Helper macro to create a standalone main function for modules
- *
- * This macro defines a main() function that initializes the module and
- * processes command-line arguments to execute commands directly.
- */
-#define DPM_MODULE_STANDALONE_MAIN() \
-extern "C" void dpm_log(int level, const char* message) { \
-const char* level_str; \
-switch (level) { \
-case 0: level_str = "FATAL"; break; \
-case 1: level_str = "ERROR"; break; \
-case 2: level_str = "WARN"; break; \
-case 3: level_str = "INFO"; break; \
-case 4: level_str = "DEBUG"; break; \
-default: level_str = "UNKNOWN"; break; \
-} \
-std::cout << "[" << level_str << "] " << message << std::endl; \
-} \
-extern "C" void dpm_con(int level, const char* message) { \
-const char* level_str; \
-switch (level) { \
-case 0: level_str = "FATAL"; break; \
-case 1: level_str = "ERROR"; break; \
-case 2: level_str = "WARN"; break; \
-case 3: level_str = "INFO"; break; \
-case 4: level_str = "DEBUG"; break; \
-default: level_str = "UNKNOWN"; break; \
-} \
-std::cout << "[" << level_str << "] " << message << std::endl; \
-} \
-extern "C" const char* dpm_get_config(const char* section, const char* key) { \
-if (!section || !key) return nullptr; \
-\
-/* Create environment variable name in format SECTION_KEY */ \
-std::string env_name = std::string(section) + "_" + std::string(key); \
-\
-/* Check if environment variable exists */ \
-const char* env_value = getenv(env_name.c_str()); \
-return env_value; /* Will be null if env var doesn't exist */ \
-} \
-extern "C" void dpm_set_logging_level(int level) { \
-std::cout << "[INFO] Verbosity level ignored, as all standalone executions have maximum verbosity" << std::endl; \
-} \
-extern "C" const char* dpm_get_module_path(void) { \
-/* Get from environment variable or use default */ \
-const char* env_path = getenv("DPM_MODULE_PATH"); \
-return env_path ? env_path : "/usr/lib/dpm/modules/"; \
-} \
-int main(int argc, char** argv) { \
-/* Default to "help" if no command is provided */ \
-const char* command = "help"; \
-\
-/* If arguments are provided, use the first as command */ \
-if (argc > 1) { \
-command = argv[1]; \
-/* Shift arguments for the command handler but keep the original argc count */ \
-argv++; \
-argc--; \
-} \
-\
-return dpm_module_execute(command, argc, argv); \
-}
-
+#include "StandaloneModuleImpl.hpp"
 #endif // BUILD_STANDALONE
