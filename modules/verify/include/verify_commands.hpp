@@ -43,6 +43,17 @@ enum Command {
 int cmd_checksum(int argc, char** argv);
 
 /**
+ * @brief Handler for the checksum help command
+ *
+ * Displays help information for the checksum command.
+ *
+ * @param argc Number of arguments
+ * @param argv Array of arguments
+ * @return 0 on success
+ */
+int cmd_checksum_help(int argc, char** argv);
+
+/**
  * @brief Handler for the signature command
  *
  * Verifies the signatures of installed packages.
@@ -54,6 +65,17 @@ int cmd_checksum(int argc, char** argv);
 int cmd_signature(int argc, char** argv);
 
 /**
+ * @brief Handler for the signature help command
+ *
+ * Displays help information for the signature command.
+ *
+ * @param argc Number of arguments
+ * @param argv Array of arguments
+ * @return 0 on success
+ */
+int cmd_signature_help(int argc, char** argv);
+
+/**
  * @brief Handler for the help command
  *
  * Displays information about available commands in the verify module.
@@ -63,6 +85,29 @@ int cmd_signature(int argc, char** argv);
  * @return 0 on success, non-zero on failure
  */
 int cmd_help(int argc, char** argv);
+
+/**
+ * @brief Handler for the check command
+ *
+ * Checks if the build module can be loaded. This validates that the integration
+ * between the verify module and build module is working correctly.
+ *
+ * @param argc Number of arguments
+ * @param argv Array of arguments
+ * @return 0 on success, non-zero on failure
+ */
+int cmd_check(int argc, char** argv);
+
+/**
+ * @brief Handler for the check help command
+ *
+ * Displays help information for the check command.
+ *
+ * @param argc Number of arguments
+ * @param argv Array of arguments
+ * @return 0 on success
+ */
+int cmd_check_help(int argc, char** argv);
 
 /**
  * @brief Handler for unknown commands
@@ -88,13 +133,11 @@ int cmd_unknown(const char* command, int argc, char** argv);
 Command parse_command(const char* cmd_str);
 
 /**
- * @brief Handler for the check command
+ * @brief Helper function to check and load the build module
  *
- * Checks if the build module can be loaded. This validates that the integration
- * between the verify module and build module is working correctly.
+ * Checks if the build module exists and can be loaded.
  *
- * @param argc Number of arguments
- * @param argv Array of arguments
+ * @param module_handle Reference to a void pointer that will hold the module handle
  * @return 0 on success, non-zero on failure
  */
-int cmd_check(int argc, char** argv);
+int check_and_load_build_module(void*& module_handle);

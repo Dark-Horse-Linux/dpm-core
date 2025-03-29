@@ -31,6 +31,8 @@
 
 #include <iostream>
 #include <string>
+#include <sys/stat.h>
+#include <dlfcn.h>
 
 /**
  * @brief Fatal log level constant
@@ -161,6 +163,59 @@ extern "C" {
      * @return The module path
      */
     const char* dpm_get_module_path(void);
+
+    /**
+     * @brief Checks if a module exists
+     *
+     * Verifies if a module exists at the configured module path.
+     *
+     * @param module_name Name of the module to check
+     * @return true if the module exists, false otherwise
+     */
+    bool dpm_module_exists(const char* module_name);
+
+    /**
+     * @brief Loads a DPM module
+     *
+     * Attempts to load a module from the configured module path.
+     *
+     * @param module_name Name of the module to load
+     * @param module_handle Pointer to store the loaded module handle
+     * @return 0 on success, non-zero on failure
+     */
+    int dpm_load_module(const char* module_name, void** module_handle);
+
+    /**
+     * @brief Checks if a symbol exists in a module
+     *
+     * Verifies if a specific symbol exists in a loaded module.
+     *
+     * @param module_handle Handle to a loaded module
+     * @param symbol_name Name of the symbol to check
+     * @return true if the symbol exists, false otherwise
+     */
+    bool dpm_symbol_exists(void* module_handle, const char* symbol_name);
+
+    /**
+     * @brief Executes a symbol in a module
+     *
+     * Attempts to execute a function in a loaded module.
+     *
+     * @param module_handle Handle to a loaded module
+     * @param symbol_name Name of the symbol to execute
+     * @param args Arguments to pass to the function
+     * @return 0 on success, non-zero on failure
+     */
+    int dpm_execute_symbol(void* module_handle, const char* symbol_name, void* args);
+
+    /**
+     * @brief Unloads a module
+     *
+     * Frees resources used by a loaded module.
+     *
+     * @param module_handle Handle to a loaded module
+     */
+    void dpm_unload_module(void* module_handle);
 }
 
 /**

@@ -10,10 +10,11 @@ else()
     set(DPM_ROOT_DIR "${CMAKE_SOURCE_DIR}")
 endif()
 
-# Create shared library
+# Create shared library - add CommonModuleAPI.cpp to the sources
 add_library(verify MODULE
         verify.cpp
         src/verify_commands.cpp
+        ${DPM_ROOT_DIR}/dpmdk/src/CommonModuleAPI.cpp  # Add this line
 )
 
 # Set output properties
@@ -27,12 +28,17 @@ set_target_properties(
 target_include_directories(verify PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${DPM_ROOT_DIR}
+        ${DPM_ROOT_DIR}/dpmdk/include  # Add this line
 )
+
+# Link with required libraries
+target_link_libraries(verify dl)
 
 # Standalone version - used for debugging
 add_executable(verify_standalone
         verify.cpp
         src/verify_commands.cpp
+        ${DPM_ROOT_DIR}/dpmdk/src/CommonModuleAPI.cpp  # Add this line
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build
@@ -42,7 +48,11 @@ target_compile_definitions(verify_standalone PRIVATE BUILD_STANDALONE)
 target_include_directories(verify_standalone PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${DPM_ROOT_DIR}
+        ${DPM_ROOT_DIR}/dpmdk/include  # Add this line
 )
+
+# Link with required libraries for standalone too
+target_link_libraries(verify_standalone dl)
 
 # Set the output name for the standalone executable
 set_target_properties(
