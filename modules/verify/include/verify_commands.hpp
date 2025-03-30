@@ -3,7 +3,7 @@
  * @brief Header file for the verify module command handlers
  *
  * Defines functions and enumerations for the verify module which verifies
- * the integrity and signatures of installed packages.
+ * the integrity and signatures of package files and stage directories.
  *
  * @copyright Copyright (c) 2025 SILO GROUP LLC
  * @author Chris Punches <chris.punches@silogroup.org>
@@ -34,7 +34,7 @@ enum Command {
 /**
  * @brief Handler for the checksum command
  *
- * Verifies the checksums of installed packages.
+ * Verifies the checksums of package files or stage directories.
  *
  * @param argc Number of arguments
  * @param argv Array of arguments
@@ -56,7 +56,7 @@ int cmd_checksum_help(int argc, char** argv);
 /**
  * @brief Handler for the signature command
  *
- * Verifies the signatures of installed packages.
+ * Verifies the signatures of package files or stage directories.
  *
  * @param argc Number of arguments
  * @param argv Array of arguments
@@ -141,3 +141,43 @@ Command parse_command(const char* cmd_str);
  * @return 0 on success, non-zero on failure
  */
 int check_and_load_build_module(void*& module_handle);
+
+/**
+ * @brief Verifies checksums for a package file
+ *
+ * Checks the integrity of a package file by verifying its checksums.
+ *
+ * @param package_path Path to the package file
+ * @return 0 on success, non-zero on failure
+ */
+int verify_checksums_package(const std::string& package_path);
+
+/**
+ * @brief Verifies checksums for a package stage directory
+ *
+ * Checks the integrity of a package stage directory by verifying its checksums.
+ *
+ * @param stage_dir Path to the stage directory
+ * @return 0 on success, non-zero on failure
+ */
+int verify_checksums_stage(const std::string& stage_dir);
+
+/**
+ * @brief Verifies signatures for a package file
+ *
+ * Checks the signatures of a package file.
+ *
+ * @param package_path Path to the package file
+ * @return 0 on success, non-zero on failure
+ */
+int verify_signature_package(const std::string& package_path);
+
+/**
+ * @brief Verifies signatures for a package stage directory
+ *
+ * Checks the signatures of a package stage directory.
+ *
+ * @param stage_dir Path to the stage directory
+ * @return 0 on success, non-zero on failure
+ */
+int verify_signature_stage(const std::string& stage_dir);

@@ -29,27 +29,97 @@ int check_and_load_build_module(void*& module_handle) {
     return 0;
 }
 
+int verify_checksums_package(const std::string& package_path) {
+    // Check if the package file exists
+    if (!std::filesystem::exists(package_path)) {
+        dpm_log(LOG_ERROR, ("Package file not found: " + package_path).c_str());
+        return 1;
+    }
+
+    // Placeholder implementation
+    dpm_log(LOG_INFO, ("Verifying checksums for package: " + package_path).c_str());
+    dpm_log(LOG_INFO, "Package checksum verification not yet implemented");
+
+    return 0;
+}
+
+int verify_checksums_stage(const std::string& stage_dir) {
+    // Check if the stage directory exists
+    if (!std::filesystem::exists(stage_dir)) {
+        dpm_log(LOG_ERROR, ("Stage directory not found: " + stage_dir).c_str());
+        return 1;
+    }
+
+    // Check if it's actually a directory
+    if (!std::filesystem::is_directory(stage_dir)) {
+        dpm_log(LOG_ERROR, ("Path is not a directory: " + stage_dir).c_str());
+        return 1;
+    }
+
+    // Placeholder implementation
+    dpm_log(LOG_INFO, ("Verifying checksums for stage directory: " + stage_dir).c_str());
+    dpm_log(LOG_INFO, "Stage directory checksum verification not yet implemented");
+
+    return 0;
+}
+
+int verify_signature_package(const std::string& package_path) {
+    // Check if the package file exists
+    if (!std::filesystem::exists(package_path)) {
+        dpm_log(LOG_ERROR, ("Package file not found: " + package_path).c_str());
+        return 1;
+    }
+
+    // Placeholder implementation
+    dpm_log(LOG_INFO, ("Verifying signatures for package: " + package_path).c_str());
+    dpm_log(LOG_INFO, "Package signature verification not yet implemented");
+
+    return 0;
+}
+
+int verify_signature_stage(const std::string& stage_dir) {
+    // Check if the stage directory exists
+    if (!std::filesystem::exists(stage_dir)) {
+        dpm_log(LOG_ERROR, ("Stage directory not found: " + stage_dir).c_str());
+        return 1;
+    }
+
+    // Check if it's actually a directory
+    if (!std::filesystem::is_directory(stage_dir)) {
+        dpm_log(LOG_ERROR, ("Path is not a directory: " + stage_dir).c_str());
+        return 1;
+    }
+
+    // Placeholder implementation
+    dpm_log(LOG_INFO, ("Verifying signatures for stage directory: " + stage_dir).c_str());
+    dpm_log(LOG_INFO, "Stage directory signature verification not yet implemented");
+
+    return 0;
+}
+
 int cmd_checksum_help(int argc, char** argv) {
     dpm_con(LOG_INFO, "Usage: dpm verify checksum [options]");
     dpm_con(LOG_INFO, "");
-    dpm_con(LOG_INFO, "Verifies the checksums of uninstalled packages.");
+    dpm_con(LOG_INFO, "Verifies the checksums of packages or package stage directories.");
     dpm_con(LOG_INFO, "");
     dpm_con(LOG_INFO, "Options:");
-    dpm_con(LOG_INFO, "  -a, --all              Verify all uninstalled packages");
-    dpm_con(LOG_INFO, "  -p, --package NAME     Verify a specific package");
+    dpm_con(LOG_INFO, "  -p, --package PATH     Path to a package file (.dpm)");
+    dpm_con(LOG_INFO, "  -s, --stage DIR        Path to a package stage directory");
     dpm_con(LOG_INFO, "  -v, --verbose          Enable verbose output");
     dpm_con(LOG_INFO, "  -h, --help             Display this help message");
     dpm_con(LOG_INFO, "");
+    dpm_con(LOG_INFO, "Note: --package and --stage are mutually exclusive options.");
+    dpm_con(LOG_INFO, "");
     dpm_con(LOG_INFO, "Examples:");
-    dpm_con(LOG_INFO, "  dpm verify checksum --all");
-    dpm_con(LOG_INFO, "  dpm verify checksum --package=mypackage");
+    dpm_con(LOG_INFO, "  dpm verify checksum --package=mypackage-1.0.x86_64.dpm");
+    dpm_con(LOG_INFO, "  dpm verify checksum --stage=./mypackage-1.0.x86_64");
     return 0;
 }
 
 int cmd_checksum(int argc, char** argv) {
     // Parse command line arguments
-    bool all_packages = false;
-    std::string package_name = "";
+    std::string package_path = "";
+    std::string stage_dir = "";
     bool verbose = false;
     bool show_help = false;
 
@@ -57,11 +127,14 @@ int cmd_checksum(int argc, char** argv) {
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
 
-        if (arg == "-a" || arg == "--all") {
-            all_packages = true;
-        } else if (arg == "-p" || arg == "--package") {
+        if (arg == "-p" || arg == "--package") {
             if (i + 1 < argc) {
-                package_name = argv[i + 1];
+                package_path = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-s" || arg == "--stage") {
+            if (i + 1 < argc) {
+                stage_dir = argv[i + 1];
                 i++; // Skip the next argument
             }
         } else if (arg == "-v" || arg == "--verbose") {
@@ -81,51 +154,48 @@ int cmd_checksum(int argc, char** argv) {
         dpm_set_logging_level(LOG_DEBUG);
     }
 
-    // Validate that either all packages or a specific package is specified
-    if (!all_packages && package_name.empty()) {
-        dpm_con(LOG_ERROR, "Either --all or --package must be specified");
-        return 1;
+    // Validate that either package_path or stage_dir is provided, but not both
+    if (package_path.empty() && stage_dir.empty()) {
+        dpm_con(LOG_ERROR, "Either --package or --stage must be specified");
+        return cmd_checksum_help(argc, argv);
     }
 
-    // Validate that both all packages and a specific package are not specified
-    if (all_packages && !package_name.empty()) {
-        dpm_con(LOG_ERROR, "Cannot specify both --all and --package");
-        return 1;
+    if (!package_path.empty() && !stage_dir.empty()) {
+        dpm_con(LOG_ERROR, "Cannot specify both --package and --stage");
+        return cmd_checksum_help(argc, argv);
     }
 
-    // Placeholder implementation
-    if (all_packages) {
-        dpm_con(LOG_INFO, "Verifying checksums for all installed packages...");
-        dpm_con(LOG_INFO, "Not yet implemented.");
+    // Call the appropriate verification function
+    if (!package_path.empty()) {
+        return verify_checksums_package(package_path);
     } else {
-        dpm_con(LOG_INFO, ("Verifying checksums for package: " + package_name).c_str());
-        dpm_con(LOG_INFO, "Not yet implemented.");
+        return verify_checksums_stage(stage_dir);
     }
-
-    return 0;
 }
 
 int cmd_signature_help(int argc, char** argv) {
     dpm_con(LOG_INFO, "Usage: dpm verify signature [options]");
     dpm_con(LOG_INFO, "");
-    dpm_con(LOG_INFO, "Verifies the signatures of installed packages.");
+    dpm_con(LOG_INFO, "Verifies the signatures of packages or package stage directories.");
     dpm_con(LOG_INFO, "");
     dpm_con(LOG_INFO, "Options:");
-    dpm_con(LOG_INFO, "  -a, --all              Verify all installed packages");
-    dpm_con(LOG_INFO, "  -p, --package NAME     Verify a specific package");
+    dpm_con(LOG_INFO, "  -p, --package PATH     Path to a package file (.dpm)");
+    dpm_con(LOG_INFO, "  -s, --stage DIR        Path to a package stage directory");
     dpm_con(LOG_INFO, "  -v, --verbose          Enable verbose output");
     dpm_con(LOG_INFO, "  -h, --help             Display this help message");
     dpm_con(LOG_INFO, "");
+    dpm_con(LOG_INFO, "Note: --package and --stage are mutually exclusive options.");
+    dpm_con(LOG_INFO, "");
     dpm_con(LOG_INFO, "Examples:");
-    dpm_con(LOG_INFO, "  dpm verify signature --all");
-    dpm_con(LOG_INFO, "  dpm verify signature --package=mypackage");
+    dpm_con(LOG_INFO, "  dpm verify signature --package=mypackage-1.0.x86_64.dpm");
+    dpm_con(LOG_INFO, "  dpm verify signature --stage=./mypackage-1.0.x86_64");
     return 0;
 }
 
 int cmd_signature(int argc, char** argv) {
     // Parse command line arguments
-    bool all_packages = false;
-    std::string package_name = "";
+    std::string package_path = "";
+    std::string stage_dir = "";
     bool verbose = false;
     bool show_help = false;
 
@@ -133,11 +203,14 @@ int cmd_signature(int argc, char** argv) {
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
 
-        if (arg == "-a" || arg == "--all") {
-            all_packages = true;
-        } else if (arg == "-p" || arg == "--package") {
+        if (arg == "-p" || arg == "--package") {
             if (i + 1 < argc) {
-                package_name = argv[i + 1];
+                package_path = argv[i + 1];
+                i++; // Skip the next argument
+            }
+        } else if (arg == "-s" || arg == "--stage") {
+            if (i + 1 < argc) {
+                stage_dir = argv[i + 1];
                 i++; // Skip the next argument
             }
         } else if (arg == "-v" || arg == "--verbose") {
@@ -157,28 +230,23 @@ int cmd_signature(int argc, char** argv) {
         dpm_set_logging_level(LOG_DEBUG);
     }
 
-    // Validate that either all packages or a specific package is specified
-    if (!all_packages && package_name.empty()) {
-        dpm_con(LOG_ERROR, "Either --all or --package must be specified");
-        return 1;
+    // Validate that either package_path or stage_dir is provided, but not both
+    if (package_path.empty() && stage_dir.empty()) {
+        dpm_con(LOG_ERROR, "Either --package or --stage must be specified");
+        return cmd_signature_help(argc, argv);
     }
 
-    // Validate that both all packages and a specific package are not specified
-    if (all_packages && !package_name.empty()) {
-        dpm_con(LOG_ERROR, "Cannot specify both --all and --package");
-        return 1;
+    if (!package_path.empty() && !stage_dir.empty()) {
+        dpm_con(LOG_ERROR, "Cannot specify both --package and --stage");
+        return cmd_signature_help(argc, argv);
     }
 
-    // Placeholder implementation
-    if (all_packages) {
-        dpm_con(LOG_INFO, "Verifying signatures for all installed packages...");
-        dpm_con(LOG_INFO, "Not yet implemented.");
+    // Call the appropriate verification function
+    if (!package_path.empty()) {
+        return verify_signature_package(package_path);
     } else {
-        dpm_con(LOG_INFO, ("Verifying signatures for package: " + package_name).c_str());
-        dpm_con(LOG_INFO, "Not yet implemented.");
+        return verify_signature_stage(stage_dir);
     }
-
-    return 0;
 }
 
 int cmd_check_help(int argc, char** argv) {
@@ -193,12 +261,12 @@ int cmd_check_help(int argc, char** argv) {
 }
 
 int cmd_help(int argc, char** argv) {
-    dpm_con(LOG_INFO, "DPM Verify Module - Verifies the integrity and signatures of installed packages.");
+    dpm_con(LOG_INFO, "DPM Verify Module - Verifies the integrity and signatures of package files and stage directories.");
     dpm_con(LOG_INFO, "");
     dpm_con(LOG_INFO, "Available commands:");
     dpm_con(LOG_INFO, "");
-    dpm_con(LOG_INFO, "  checksum   - Verify checksums of installed packages");
-    dpm_con(LOG_INFO, "  signature  - Verify signatures of installed packages");
+    dpm_con(LOG_INFO, "  checksum   - Verify checksums of package files or stage directories");
+    dpm_con(LOG_INFO, "  signature  - Verify signatures of package files or stage directories");
     dpm_con(LOG_INFO, "  check      - Check build module integration");
     dpm_con(LOG_INFO, "  help       - Display this help message");
     dpm_con(LOG_INFO, "");
