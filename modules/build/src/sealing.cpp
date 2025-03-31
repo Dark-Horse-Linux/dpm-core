@@ -1,5 +1,7 @@
 #include "sealing.hpp"
 
+// TODO finalize's seal currently assumes unsealed components which is not necessarily the case.
+// it should unseal if sealed and seal whole so that the metadata refresh is always accurate
 
 bool file_already_compressed(const std::string& path)
 {

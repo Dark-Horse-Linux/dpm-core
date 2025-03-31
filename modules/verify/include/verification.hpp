@@ -15,6 +15,8 @@
 #include <string>
 #include <filesystem>
 #include <dpmdk/include/CommonModuleAPI.hpp>
+#include "commands.hpp"
+#include "checksum.hpp"
 
 /**
  * @brief Verifies checksums for a package file

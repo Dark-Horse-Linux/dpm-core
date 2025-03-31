@@ -17,6 +17,8 @@ add_library(verify MODULE
         ${DPM_ROOT_DIR}/dpmdk/src/CommonModuleAPI.cpp
         src/cli_parsers.cpp
         src/verification.cpp
+        src/checksum.cpp
+        ../../dpmdk/src/ModuleOperations.cpp
 )
 
 # Set output properties
@@ -43,6 +45,8 @@ add_executable(verify_standalone
         ${DPM_ROOT_DIR}/dpmdk/src/CommonModuleAPI.cpp
         src/cli_parsers.cpp
         src/verification.cpp
+        src/checksum.cpp
+        ../../dpmdk/src/ModuleOperations.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build
