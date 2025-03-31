@@ -1,5 +1,5 @@
 /**
- * @file verify_commands.cpp
+ * @file commands.cpp
  * @brief Implementation of command handlers for the verify module
  *
  * Implements the command handlers for verifying package checksums and signatures.
@@ -10,7 +10,7 @@
  * Part of the Dark Horse Linux Package Manager (DPM)
  */
 
-#include "verify_commands.hpp"
+#include "commands.hpp"
 
 int check_and_load_build_module(void*& module_handle) {
     // Check if build module exists
@@ -25,74 +25,6 @@ int check_and_load_build_module(void*& module_handle) {
         dpm_log(LOG_ERROR, "Failed to load build module");
         return result;
     }
-
-    return 0;
-}
-
-int verify_checksums_package(const std::string& package_path) {
-    // Check if the package file exists
-    if (!std::filesystem::exists(package_path)) {
-        dpm_log(LOG_ERROR, ("Package file not found: " + package_path).c_str());
-        return 1;
-    }
-
-    // Placeholder implementation
-    dpm_log(LOG_INFO, ("Verifying checksums for package: " + package_path).c_str());
-    dpm_log(LOG_INFO, "Package checksum verification not yet implemented");
-
-    return 0;
-}
-
-int verify_checksums_stage(const std::string& stage_dir) {
-    // Check if the stage directory exists
-    if (!std::filesystem::exists(stage_dir)) {
-        dpm_log(LOG_ERROR, ("Stage directory not found: " + stage_dir).c_str());
-        return 1;
-    }
-
-    // Check if it's actually a directory
-    if (!std::filesystem::is_directory(stage_dir)) {
-        dpm_log(LOG_ERROR, ("Path is not a directory: " + stage_dir).c_str());
-        return 1;
-    }
-
-    // Placeholder implementation
-    dpm_log(LOG_INFO, ("Verifying checksums for stage directory: " + stage_dir).c_str());
-    dpm_log(LOG_INFO, "Stage directory checksum verification not yet implemented");
-
-    return 0;
-}
-
-int verify_signature_package(const std::string& package_path) {
-    // Check if the package file exists
-    if (!std::filesystem::exists(package_path)) {
-        dpm_log(LOG_ERROR, ("Package file not found: " + package_path).c_str());
-        return 1;
-    }
-
-    // Placeholder implementation
-    dpm_log(LOG_INFO, ("Verifying signatures for package: " + package_path).c_str());
-    dpm_log(LOG_INFO, "Package signature verification not yet implemented");
-
-    return 0;
-}
-
-int verify_signature_stage(const std::string& stage_dir) {
-    // Check if the stage directory exists
-    if (!std::filesystem::exists(stage_dir)) {
-        dpm_log(LOG_ERROR, ("Stage directory not found: " + stage_dir).c_str());
-        return 1;
-    }
-
-    // Check if it's actually a directory
-    if (!std::filesystem::is_directory(stage_dir)) {
-        dpm_log(LOG_ERROR, ("Path is not a directory: " + stage_dir).c_str());
-        return 1;
-    }
-
-    // Placeholder implementation
-    dpm_log(LOG_INFO, ("Verifying signatures for stage directory: " + stage_dir).c_str());
-    dpm_log(LOG_INFO, "Stage directory signature verification not yet implemented");
 
     return 0;
 }
@@ -283,27 +215,6 @@ int cmd_unknown(const char* command, int argc, char** argv) {
     dpm_con(LOG_WARN, msg.c_str());
     dpm_con(LOG_WARN, "Run 'dpm verify help' for a list of available commands");
     return 1;
-}
-
-Command parse_command(const char* cmd_str) {
-    if (cmd_str == nullptr || strlen(cmd_str) == 0) {
-        return CMD_HELP;
-    }
-
-    if (strcmp(cmd_str, "help") == 0) {
-        return CMD_HELP;
-    }
-    else if (strcmp(cmd_str, "checksum") == 0) {
-        return CMD_CHECKSUM;
-    }
-    else if (strcmp(cmd_str, "signature") == 0) {
-        return CMD_SIGNATURE;
-    }
-    else if (strcmp(cmd_str, "check") == 0) {
-        return CMD_CHECK;
-    }
-
-    return CMD_UNKNOWN;
 }
 
 int cmd_check(int argc, char** argv) {

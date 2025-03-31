@@ -27,7 +27,8 @@
  * mailing list at: https://lists.darkhorselinux.org/mailman/listinfo/dhlp-contributors
  */
 
-#include "include/verify_commands.hpp"
+#include "include/commands.hpp"
+#include "include/cli_parsers.hpp"
 
 /**
  * @def MODULE_VERSION

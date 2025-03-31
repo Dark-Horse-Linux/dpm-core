@@ -1,5 +1,5 @@
 /**
- * @file verify_commands.hpp
+ * @file commands.hpp
  * @brief Header file for the verify module command handlers
  *
  * Defines functions and enumerations for the verify module which verifies
@@ -18,18 +18,6 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <filesystem>
-
-/**
- * @enum Command
- * @brief Enumeration of supported commands for the verify module
- */
-enum Command {
-    CMD_UNKNOWN,     /**< Unknown or unsupported command */
-    CMD_HELP,        /**< Display help information */
-    CMD_CHECKSUM,    /**< Verify package checksums */
-    CMD_SIGNATURE,   /**< Verify package signatures */
-    CMD_CHECK        /**< Check build module integration */
-};
 
 /**
  * @brief Handler for the checksum command
@@ -120,17 +108,6 @@ int cmd_check_help(int argc, char** argv);
  * @return 1 to indicate failure
  */
 int cmd_unknown(const char* command, int argc, char** argv);
-
-/**
- * @brief Parses a command string into a Command enum value
- *
- * Converts a command string to the appropriate Command enum value
- * for internal routing.
- *
- * @param cmd_str The command string to parse
- * @return The corresponding Command enum value
- */
-Command parse_command(const char* cmd_str);
 
 /**
  * @brief Helper function to check and load the build module
