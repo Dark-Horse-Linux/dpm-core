@@ -13,7 +13,7 @@
 
 #include "checksums.hpp"
 
-std::string get_configured_hash_algorithm()
+extern "C" std::string get_configured_hash_algorithm()
 {
     const char* algorithm = dpm_get_config("cryptography", "checksum_algorithm");
     if (algorithm && strlen(algorithm) > 0) {
@@ -24,7 +24,7 @@ std::string get_configured_hash_algorithm()
     return "sha256";
 }
 
-std::string get_available_algorithms()
+extern "C" std::string get_available_algorithms()
 {
     std::vector<std::string> algorithms;
     std::vector<std::string> working_algorithms;
@@ -83,7 +83,7 @@ std::string get_available_algorithms()
     return result.str();
 }
 
-std::string generate_file_checksum(const std::filesystem::path& file_path)
+extern "C" std::string generate_file_checksum(const std::filesystem::path& file_path)
 {
     // Get configured algorithm
     std::string algorithm_name = get_configured_hash_algorithm();
@@ -170,7 +170,7 @@ std::string generate_file_checksum(const std::filesystem::path& file_path)
     return ss.str();
 }
 
-std::string generate_string_checksum(const std::string& input_string)
+extern "C" std::string generate_string_checksum(const std::string& input_string)
 {
     // Get configured algorithm
     std::string algorithm_name = get_configured_hash_algorithm();

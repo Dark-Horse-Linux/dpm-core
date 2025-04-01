@@ -32,7 +32,7 @@
  *
  * @return String containing the name of the hash algorithm to use
  */
-std::string get_configured_hash_algorithm();
+extern "C" std::string get_configured_hash_algorithm();
 
 /**
  * @brief Gets a list of available digest algorithms from OpenSSL
@@ -42,7 +42,7 @@ std::string get_configured_hash_algorithm();
  *
  * @return String containing comma-separated list of available algorithms
  */
-std::string get_available_algorithms();
+extern "C" std::string get_available_algorithms();
 
 /**
  * @brief Generates a file checksum using the configured hashing algorithm
@@ -54,7 +54,7 @@ std::string get_available_algorithms();
  * @param file_path Path to the file to be hashed
  * @return String containing the hexadecimal representation of the checksum, or empty string on error
  */
-std::string generate_file_checksum(const std::filesystem::path& file_path);
+extern "C" std::string generate_file_checksum(const std::filesystem::path& file_path);
 
 /**
  * @brief Generates a checksum of a string using the configured hashing algorithm
@@ -65,4 +65,4 @@ std::string generate_file_checksum(const std::filesystem::path& file_path);
  * @param input_string The string to be hashed
  * @return String containing the hexadecimal representation of the checksum, or empty string on error
  */
-std::string generate_string_checksum(const std::string& input_string);
+extern "C" std::string generate_string_checksum(const std::string& input_string);
