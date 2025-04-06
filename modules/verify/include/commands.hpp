@@ -18,6 +18,8 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 #include <filesystem>
+#include "checksum_memory.hpp"
+#include "package_operations.hpp"
 
 /**
  * @brief Handler for the checksum command
@@ -158,3 +160,26 @@ int verify_signature_package(const std::string& package_path);
  * @return 0 on success, non-zero on failure
  */
 int verify_signature_stage(const std::string& stage_dir);
+
+/**
+ * @brief Verifies checksums of a package file in memory
+ *
+ * Loads the components of a package file into memory and verifies their checksums
+ * without extracting them to disk.
+ *
+ * @param package_path Path to the package file
+ * @return 0 on success, non-zero on failure
+ */
+int verify_checksums_package_memory(const std::string& package_path);
+
+/**
+ * @brief Converts binary data to a C++ string
+ *
+ * Takes a buffer of binary data and its size, creates a properly
+ * null-terminated string, and returns it as an std::string.
+ *
+ * @param data Pointer to the binary data
+ * @param data_size Size of the binary data
+ * @return std::string containing the data, or empty string on error
+ */
+std::string binary_to_string(const unsigned char* data, size_t data_size);

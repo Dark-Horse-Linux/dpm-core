@@ -19,6 +19,8 @@ add_library(verify MODULE
         src/verification.cpp
         src/checksum.cpp
         ../../dpmdk/src/ModuleOperations.cpp
+        src/package_operations.cpp
+        src/checksum_memory.cpp
 )
 
 # Set output properties
@@ -47,6 +49,8 @@ add_executable(verify_standalone
         src/verification.cpp
         src/checksum.cpp
         ../../dpmdk/src/ModuleOperations.cpp
+        src/package_operations.cpp
+        src/checksum_memory.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build

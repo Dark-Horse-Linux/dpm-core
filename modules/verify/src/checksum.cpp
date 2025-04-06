@@ -298,3 +298,4 @@ int checksum_verify_package_digest(const std::string& stage_dir, void* build_mod
     dpm_log(LOG_INFO, "Package digest verification successful");
     return 0;
 }
+

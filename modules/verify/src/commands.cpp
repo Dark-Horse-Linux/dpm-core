@@ -271,3 +271,129 @@ int cmd_check(int argc, char** argv) {
 
     return 0;
 }
+
+/**
+ * @brief Verifies checksums of a package file in memory
+ *
+ * Loads the components of a package file into memory and verifies their checksums
+ * without extracting them to disk.
+ *
+ * @param package_path Path to the package file
+ * @return 0 on success, non-zero on failure
+ */
+int verify_checksums_package_memory(const std::string& package_path) {
+    // Check if the package file exists
+    if (!std::filesystem::exists(package_path)) {
+        dpm_log(LOG_ERROR, ("Package file not found: " + package_path).c_str());
+        return 1;
+    }
+
+    dpm_log(LOG_INFO, ("Verifying checksums for package in memory: " + package_path).c_str());
+
+    // Load the build module
+    void* build_module = nullptr;
+    int result = check_and_load_build_module(build_module);
+    if (result != 0 || build_module == nullptr) {
+        dpm_log(LOG_ERROR, "Failed to load build module");
+        return 1;
+    }
+
+    // Extract package components into memory
+    unsigned char* metadata_data = nullptr;
+    size_t metadata_data_size = 0;
+    unsigned char* contents_data = nullptr;
+    size_t contents_data_size = 0;
+    unsigned char* hooks_data = nullptr;
+    size_t hooks_data_size = 0;
+
+    // Load metadata component
+    dpm_log(LOG_INFO, "Loading metadata component...");
+    result = get_component_from_package(package_path, "metadata", &metadata_data, &metadata_data_size);
+    if (result != 0 || !metadata_data || metadata_data_size == 0) {
+        dpm_log(LOG_ERROR, "Failed to load metadata component");
+        dpm_unload_module(build_module);
+        return 1;
+    }
+
+    // Load contents component
+    dpm_log(LOG_INFO, "Loading contents component...");
+    result = get_component_from_package(package_path, "contents", &contents_data, &contents_data_size);
+    if (result != 0 || !contents_data || contents_data_size == 0) {
+        dpm_log(LOG_ERROR, "Failed to load contents component");
+        free(metadata_data);
+        dpm_unload_module(build_module);
+        return 1;
+    }
+
+    // Load hooks component
+    dpm_log(LOG_INFO, "Loading hooks component...");
+    result = get_component_from_package(package_path, "hooks", &hooks_data, &hooks_data_size);
+    if (result != 0 || !hooks_data || hooks_data_size == 0) {
+        dpm_log(LOG_ERROR, "Failed to load hooks component");
+        free(metadata_data);
+        free(contents_data);
+        dpm_unload_module(build_module);
+        return 1;
+    }
+
+    // Verify package digest
+    dpm_log(LOG_INFO, "Verifying package digest...");
+    result = checksum_verify_package_digest_memory(
+        metadata_data,
+        metadata_data_size,
+        build_module
+    );
+    if (result != 0) {
+        dpm_log(LOG_ERROR, "Package digest verification failed");
+        free(metadata_data);
+        free(contents_data);
+        free(hooks_data);
+        dpm_unload_module(build_module);
+        return 1;
+    }
+
+    // Verify contents manifest digest
+    dpm_log(LOG_INFO, "Verifying contents manifest digest...");
+    result = checksum_verify_contents_digest_memory(
+        contents_data,
+        contents_data_size,
+        metadata_data,
+        metadata_data_size,
+        build_module
+    );
+    if (result != 0) {
+        dpm_log(LOG_ERROR, "Contents manifest verification failed");
+        free(metadata_data);
+        free(contents_data);
+        free(hooks_data);
+        dpm_unload_module(build_module);
+        return 1;
+    }
+
+    // Verify hooks digest
+    dpm_log(LOG_INFO, "Verifying hooks digest...");
+    result = checksum_verify_hooks_digest_memory(
+        hooks_data,
+        hooks_data_size,
+        metadata_data,
+        metadata_data_size,
+        build_module
+    );
+    if (result != 0) {
+        dpm_log(LOG_ERROR, "Hooks digest verification failed");
+        free(metadata_data);
+        free(contents_data);
+        free(hooks_data);
+        dpm_unload_module(build_module);
+        return 1;
+    }
+
+    // Clean up
+    free(metadata_data);
+    free(contents_data);
+    free(hooks_data);
+    dpm_unload_module(build_module);
+
+    dpm_log(LOG_INFO, "All in-memory checksums verified successfully");
+    return 0;
+}

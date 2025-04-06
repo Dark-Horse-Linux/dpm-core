@@ -10,9 +10,7 @@
  *
  * Part of the Dark Horse Linux Package Manager (DPM)
  */
-
 #include "verification.hpp"
-
 
 int verify_checksums_package(const std::string& package_path) {
     // Check if the package file exists
@@ -192,7 +190,6 @@ int verify_signature_package(const std::string& package_path) {
 
     return 0;
 }
-
 
 int verify_signature_stage(const std::string& stage_dir) {
     // Check if the stage directory exists

@@ -35,6 +35,7 @@ src/signing.cpp
 src/checksums.cpp
 src/metadata.cpp
 src/sealing.cpp
+        src/archive_reader.cpp
 )
 
 # Set output properties
@@ -67,6 +68,7 @@ src/signing.cpp
 src/checksums.cpp
 src/metadata.cpp
 src/sealing.cpp
+        src/archive_reader.cpp
 )
 
 # Define the BUILD_STANDALONE macro for the standalone build
